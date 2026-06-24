@@ -6,6 +6,8 @@ import pandas as pd
 from detector import InventoryDetector
 from db_manager import DBManager
 import plotly.express as px
+from report_generator import generate_pdf_report, generate_csv_report
+
 
 
 # Page configuration
@@ -209,8 +211,36 @@ if app_mode == "Static Image Upload":
                                 send_alert_notification("Telegram Bot", alert_cfg["telegram_chat_id"], f"Low Stock Warning: {', '.join(low_stock_triggered)}")
                     except Exception as e:
                         st.error(f"Failed to log scan: {e}")
+                
+                # Report downloads layout
+                st.write("---")
+                st.write("### 📝 Export Inventory Reports")
+                col_pdf, col_csv = st.columns(2)
+                with col_pdf:
+                    try:
+                        pdf_data = generate_pdf_report(tally_data, total_items, total_value)
+                        st.download_button(
+                            label="📄 Download PDF Report",
+                            data=pdf_data,
+                            file_name="inventory_report.pdf",
+                            mime="application/pdf"
+                        )
+                    except Exception as ex:
+                        st.error(f"Failed to build PDF download: {ex}")
+                with col_csv:
+                    try:
+                        csv_data = generate_csv_report(tally_data)
+                        st.download_button(
+                            label="📊 Download CSV Report",
+                            data=csv_data,
+                            file_name="inventory_report.csv",
+                            mime="text/csv"
+                        )
+                    except Exception as ex:
+                        st.error(f"Failed to build CSV download: {ex}")
             else:
                 st.info("No retail products detected in this snapshot.")
+
 
 elif app_mode == "Webcam & Video Tracking":
     st.subheader("📹 Video Tracking & Inventory Tallying")

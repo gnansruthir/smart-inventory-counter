@@ -26,37 +26,23 @@ class InventoryDetector:
 
         if image is None:
             raise ValueError("Could not read image source")
-
-        # Run inference
         results = self.model(image)
-        result = results[0]  # YOLO returns a list of results
-
-        # Copy image for drawing bounding boxes
-        annotated_image = result.plot()  # Ultralytics built-in plot function
-
-        # Count objects
+        result = results[0]  
+        annotated_image = result.plot()  
         class_counts = {}
         for box in result.boxes:
             class_id = int(box.cls[0])
             class_name = self.model.names[class_id]
             class_counts[class_name] = class_counts.get(class_name, 0) + 1
-
-        # Convert annotated image from BGR (OpenCV) to RGB (Streamlit expects RGB)
         annotated_image_rgb = cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB)
 
         return annotated_image_rgb, class_counts
 
     def track_frame(self, frame):
-        # Runs tracking on a single frame.
-        # Returns:
-        #   annotated_frame: RGB frame with bounding boxes and tracking IDs.
-        #   active_tracks: dict of active tracking IDs -> class names.
-
-        # Run ByteTrack tracking on the frame
+        
         results = self.model.track(frame, persist=True, tracker="bytetrack.yaml", verbose=False)
         result = results[0]
 
-        # Draw bounding boxes and tracking IDs
         annotated_frame = result.plot()
         annotated_frame_rgb = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
 
