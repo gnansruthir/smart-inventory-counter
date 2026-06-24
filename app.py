@@ -91,7 +91,8 @@ st.markdown("""
 
 # Sidebar Navigation
 st.sidebar.title("Navigation")
-app_mode = st.sidebar.radio("Go to", ["Static Image Upload", "Webcam & Video Tracking", "Before/After Comparison", "SKU Management", "Alert Settings & Logs", "Analytics & History"])
+app_mode = st.sidebar.radio("Go to", ["Static Image Upload", "Webcam & Video Tracking", "Before/After Comparison", "SKU Management", "Stock Alerts Panel", "Alert Settings & Logs", "Analytics & History"])
+
 
 # Alert notifier helper (simulated SMTP / Telegram)
 def send_alert_notification(channel, recipient, message):
@@ -722,5 +723,71 @@ elif app_mode == "Analytics & History":
 
 
 
+elif app_mode == "Stock Alerts Panel":
+    st.subheader("🔔 Low-Stock Alerts & Purchase Requests")
+    st.write("Cross-references the latest scan session with catalog thresholds to identify items that need restocking.")
+    
+    scans = db_manager.get_all_scans()
+    if scans:
+        latest_scan = scans[0] # Ordered by DESC, so 0 is latest
+        latest_scan_id = latest_scan[0]
+        latest_timestamp = latest_scan[1]
+        
+        st.info(f"Analyzing Stock Levels based on **Scan ID: {latest_scan_id}** (Captured: `{latest_timestamp}`)")
+        
+        details = db_manager.get_scan_details(latest_scan_id)
+        if details:
+            low_stock_list = []
+            for item in details:
+                # details returns list of tuples: (sku_name, class_id, count, unit_price)
+                sku_name = item[0]
+                class_id = item[1]
+                count = item[2]
+                price = item[3]
+                
+                # Get threshold from mapping
+                mapping = sku_mapping.get(class_id, {"low_stock_threshold": 0})
+                threshold = mapping["low_stock_threshold"]
+                
+                if count < threshold:
+                    deficit = threshold - count
+                    low_stock_list.append({
+                        "SKU Name": sku_name,
+                        "Class ID": class_id,
+                        "Current Count": count,
+                        "Min Threshold": threshold,
+                        "Deficit (To Reorder)": deficit,
+                        "Unit Price": f"${price:.2f}",
+                        "Estimated Cost": f"${deficit * price:.2f}",
+                        "_raw_cost": deficit * price
+                    })
+                    
+            if low_stock_list:
+                df_alerts = pd.DataFrame(low_stock_list)
+                total_cost = sum(x["_raw_cost"] for x in low_stock_list)
+                
+                st.error(f"### ⚠️ {len(low_stock_list)} Items Below Threshold!")
+                st.write("Below is the list of items that require replenishment:")
+                st.dataframe(df_alerts[["SKU Name", "Current Count", "Min Threshold", "Deficit (To Reorder)", "Unit Price", "Estimated Cost"]], hide_index=True, use_container_width=True)
+                
+                st.markdown(f"#### 💰 Total Estimated Cost to Restock: **${total_cost:.2f}**")
+                
+                # Purchase order CSV
+                csv_po = df_alerts[["SKU Name", "Deficit (To Reorder)", "Unit Price", "Estimated Cost"]].to_csv(index=False)
+                st.download_button(
+                    label="📥 Export Purchase Reorder List to CSV",
+                    data=csv_po,
+                    file_name="purchase_reorder_request.csv",
+                    mime="text/csv"
+                )
+            else:
+                st.success("### 🎉 All Stock Levels are Optimal!")
+                st.write("No items are currently below their warning thresholds based on the latest scan.")
+        else:
+            st.info("No item details found in the latest scan session.")
+    else:
+        st.info("No scanning history logged yet. Run a shelf snapshot scan first to populate alert checks.")
+
 else:
     st.info("The live webcam feed component is scheduled for development in Phase 3.")
+
