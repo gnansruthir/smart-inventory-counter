@@ -517,8 +517,36 @@ elif app_mode == "SKU Management":
             st.success(f"Removed SKU mapping for class '{class_to_delete}'.")
             st.rerun()
 
-    st.write("### Active SKU Mappings")
+    st.write("### Active SKU Catalog")
     if sku_mapping:
+        icons_map = {
+            "bottle": "🥤",
+            "cup": "☕",
+            "box": "📦",
+            "can": "🥫",
+            "packet": "✉️",
+            "bowl": "🥣"
+        }
+        
+        cols = st.columns(3)
+        for i, (cls_name, info) in enumerate(sku_mapping.items()):
+            col_idx = i % 3
+            with cols[col_idx]:
+                icon = icons_map.get(cls_name, "🛍️")
+                st.markdown(f"""
+                    <div style="background-color: #1e293b; padding: 1.25rem; border-radius: 8px; border: 1px solid #334155; margin-bottom: 15px;">
+                        <div style="font-size: 2rem; margin-bottom: 5px;">{icon}</div>
+                        <h4 style="margin: 0; color: #f8fafc;">{info['sku_name']}</h4>
+                        <p style="margin: 5px 0; color: #94a3b8; font-size: 0.85rem;">Class ID: <code>{cls_name}</code></p>
+                        <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                            <span style="color: #10b981; font-weight: bold;">${info['price']:.2f}</span>
+                            <span style="color: #f59e0b; font-size: 0.85rem;">Min Alert: {info['low_stock_threshold']}</span>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+                
+        st.write("---")
+        st.write("#### Catalog Table View")
         records = []
         for cls_name, info in sku_mapping.items():
             records.append({
@@ -530,6 +558,7 @@ elif app_mode == "SKU Management":
         st.dataframe(pd.DataFrame(records), hide_index=True, use_container_width=True)
     else:
         st.info("No custom SKU mappings registered yet.")
+
 
 
 elif app_mode == "Alert Settings & Logs":
