@@ -5,17 +5,13 @@ from datetime import datetime
 class DBManager:
     def __init__(self, db_path="data/inventory.db"):
         self.db_path = db_path
-        # Ensure data folder exists
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
         self.init_db()
-
     def get_connection(self):
         return sqlite3.connect(self.db_path)
-
     def init_db(self):
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            # Table to store scan sessions
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS scans (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -24,7 +20,6 @@ class DBManager:
                     total_value REAL NOT NULL
                 )
             """)
-            # Table to store individual SKU counts per scan session
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS scan_items (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,

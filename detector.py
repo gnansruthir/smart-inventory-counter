@@ -14,6 +14,7 @@ class InventoryDetector:
         """
         Runs object detection on an image.
         Returns the annotated image and counts of detected classes.
+        """
         
         if isinstance(image_path_or_buf, str):
             image = cv2.imread(image_path_or_buf)
@@ -21,6 +22,7 @@ class InventoryDetector:
             # Decode image from buffer
             file_bytes = np.frombuffer(image_path_or_buf.read(), np.uint8)
             image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+
 
         if image is None:
             raise ValueError("Could not read image source")
@@ -44,6 +46,31 @@ class InventoryDetector:
 
         return annotated_image_rgb, class_counts
 
+    def track_frame(self, frame):
+        # Runs tracking on a single frame.
+        # Returns:
+        #   annotated_frame: RGB frame with bounding boxes and tracking IDs.
+        #   active_tracks: dict of active tracking IDs -> class names.
+
+        # Run ByteTrack tracking on the frame
+        results = self.model.track(frame, persist=True, tracker="bytetrack.yaml", verbose=False)
+        result = results[0]
+
+        # Draw bounding boxes and tracking IDs
+        annotated_frame = result.plot()
+        annotated_frame_rgb = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
+
+        active_tracks = {}
+        if result.boxes is not None and result.boxes.id is not None:
+            ids = result.boxes.id.int().tolist()
+            clss = result.boxes.cls.int().tolist()
+            for obj_id, cls_id in zip(ids, clss):
+                class_name = self.model.names[cls_id]
+                active_tracks[obj_id] = class_name
+
+        return annotated_frame_rgb, active_tracks
+
 # Quick self-test script block
 if __name__ == "__main__":
     print("YOLOv8 Inventory Detector initialized successfully.")
+
