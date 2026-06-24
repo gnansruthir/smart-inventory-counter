@@ -77,3 +77,10 @@ class DBManager:
                 WHERE scan_id = ?
             """, (scan_id,))
             return cursor.fetchall()
+
+    def clear_all_scans(self):
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM scan_items")
+            cursor.execute("DELETE FROM scans")
+            conn.commit()

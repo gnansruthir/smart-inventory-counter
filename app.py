@@ -506,6 +506,17 @@ elif app_mode == "SKU Management":
                 save_sku_mapping(sku_mapping)
                 st.success(f"Configured SKU mapping for class '{class_name}'.")
 
+    # Form to delete mappings
+    with st.form("delete_sku_form"):
+        st.write("### Delete SKU Mapping")
+        class_to_delete = st.selectbox("Select YOLO Class to delete", options=[""] + list(sku_mapping.keys()))
+        delete_btn = st.form_submit_button("Delete SKU Config")
+        if delete_btn and class_to_delete:
+            del sku_mapping[class_to_delete]
+            save_sku_mapping(sku_mapping)
+            st.success(f"Removed SKU mapping for class '{class_to_delete}'.")
+            st.rerun()
+
     st.write("### Active SKU Mappings")
     if sku_mapping:
         records = []
@@ -519,6 +530,7 @@ elif app_mode == "SKU Management":
         st.dataframe(pd.DataFrame(records), hide_index=True, use_container_width=True)
     else:
         st.info("No custom SKU mappings registered yet.")
+
 
 elif app_mode == "Alert Settings & Logs":
     st.subheader("🔔 Notification Channels & System Alerts")
@@ -555,6 +567,18 @@ elif app_mode == "Alert Settings & Logs":
             with open(CONFIG_FILE, "w") as f:
                 json.dump(alert_config, f, indent=2)
             st.success("Successfully saved notification channel credentials!")
+
+    # Database reset danger section
+    st.write("---")
+    st.write("### ⚠️ Danger Zone")
+    st.warning("Clearing database scan history is irreversible!")
+    if st.button("🗑️ Reset & Clear Scan Database Logs"):
+        try:
+            db_manager.clear_all_scans()
+            st.success("Successfully cleared all scanning history records!")
+        except Exception as e:
+            st.error(f"Failed to clear database logs: {e}")
+
 
 elif app_mode == "Analytics & History":
     st.subheader("📈 Historical Trends & Scan Logs")

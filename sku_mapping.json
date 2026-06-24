@@ -4,11 +4,6 @@
     "price": 1.99,
     "low_stock_threshold": 5
   },
-  "cup": {
-    "sku_name": "Coffee Cup Ceramic",
-    "price": 4.5,
-    "low_stock_threshold": 3
-  },
   "box": {
     "sku_name": "Cardboard Box Large",
     "price": 0.99,
