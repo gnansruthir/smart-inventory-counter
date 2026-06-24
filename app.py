@@ -120,13 +120,28 @@ if app_mode == "Static Image Upload":
         with col2:
             st.write("### Scan Breakdown")
             if counts:
-                # Compile table mapping counts to SKUs
+                # Store detected counts in session state to allow manual modifications
+                if "adjusted_counts" not in st.session_state or st.button("🔄 Reset to AI Counts"):
+                    st.session_state.adjusted_counts = counts.copy()
+
+                # Add adjustment controls
+                st.write("#### ✏️ Edit Quantities (Manual Override)")
+                for cls_id in list(st.session_state.adjusted_counts.keys()):
+                    mapping = sku_mapping.get(cls_id, {"sku_name": f"Unmapped ({cls_id})"})
+                    st.session_state.adjusted_counts[cls_id] = st.number_input(
+                        f"Quantity for {mapping['sku_name']}",
+                        min_value=0,
+                        value=int(st.session_state.adjusted_counts[cls_id]),
+                        key=f"adj_{cls_id}"
+                    )
+
+                # Compile table mapping counts to SKUs using adjusted counts
                 tally_data = []
                 total_value = 0.0
                 total_items = 0
                 low_stock_triggered = []
                 
-                for detected_class, count in counts.items():
+                for detected_class, count in st.session_state.adjusted_counts.items():
                     mapping = sku_mapping.get(detected_class, {
                         "sku_name": f"Unmapped ({detected_class})",
                         "price": 0.0,
@@ -162,6 +177,7 @@ if app_mode == "Static Image Upload":
                 df_tally = pd.DataFrame(tally_data)
                 
                 # Show key metrics in premium widgets
+                st.write("### Adjusted Summary")
                 st.markdown(f"""
                     <div style="display: flex; gap: 10px; margin-bottom: 20px;">
                         <div class="metric-card" style="flex: 1; text-align: center;">
@@ -211,6 +227,7 @@ if app_mode == "Static Image Upload":
                                 send_alert_notification("Telegram Bot", alert_cfg["telegram_chat_id"], f"Low Stock Warning: {', '.join(low_stock_triggered)}")
                     except Exception as e:
                         st.error(f"Failed to log scan: {e}")
+
                 
                 # Report downloads layout
                 st.write("---")
