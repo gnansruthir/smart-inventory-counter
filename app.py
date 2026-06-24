@@ -648,17 +648,31 @@ elif app_mode == "Analytics & History":
             
         df_filtered = df_scans[(df_scans["ParsedDate"] >= start_date) & (df_scans["ParsedDate"] <= end_date)]
         
+        st.write("### ⚙️ Visualization Settings")
+        col_c1, col_c2 = st.columns(2)
+        with col_c1:
+            val_chart_type = st.selectbox("Valuation Chart Format", ["Line Chart", "Area Chart"])
+        with col_c2:
+            qty_chart_type = st.selectbox("Quantity Chart Format", ["Bar Chart", "Line Chart"])
+            
         if not df_filtered.empty:
             col1, col2 = st.columns(2)
             with col1:
                 st.write("### Retail Stock Value Over Time")
-                fig_val = px.line(df_filtered, x="Timestamp", y="Total Value ($)", title="Inventory Valuation Trend", markers=True)
+                if val_chart_type == "Area Chart":
+                    fig_val = px.area(df_filtered, x="Timestamp", y="Total Value ($)", title="Inventory Valuation Trend")
+                else:
+                    fig_val = px.line(df_filtered, x="Timestamp", y="Total Value ($)", title="Inventory Valuation Trend", markers=True)
                 st.plotly_chart(fig_val, use_container_width=True)
                 
             with col2:
                 st.write("### Total Item Count Over Time")
-                fig_count = px.bar(df_filtered, x="Timestamp", y="Total Items", title="Product Count Logs")
+                if qty_chart_type == "Line Chart":
+                    fig_count = px.line(df_filtered, x="Timestamp", y="Total Items", title="Product Count Logs", markers=True)
+                else:
+                    fig_count = px.bar(df_filtered, x="Timestamp", y="Total Items", title="Product Count Logs")
                 st.plotly_chart(fig_count, use_container_width=True)
+
                 
             st.write("### Historical Log")
             search_query = st.text_input("🔍 Search logs by Scan ID...", value="")
