@@ -588,22 +588,36 @@ elif app_mode == "Analytics & History":
     
     if scans:
         df_scans = pd.DataFrame(scans, columns=["Scan ID", "Timestamp", "Total Items", "Total Value ($)"])
+        df_scans["ParsedDate"] = pd.to_datetime(df_scans["Timestamp"]).dt.date
         
-        col1, col2 = st.columns(2)
-        with col1:
-            st.write("### Retail Stock Value Over Time")
-            fig_val = px.line(df_scans, x="Timestamp", y="Total Value ($)", title="Inventory Valuation Trend", markers=True)
-            st.plotly_chart(fig_val, use_container_width=True)
+        st.write("### 🔍 Filter Scan History")
+        col_f1, col_f2 = st.columns(2)
+        with col_f1:
+            start_date = st.date_input("Start Date", value=df_scans["ParsedDate"].min())
+        with col_f2:
+            end_date = st.date_input("End Date", value=df_scans["ParsedDate"].max())
             
-        with col2:
-            st.write("### Total Item Count Over Time")
-            fig_count = px.bar(df_scans, x="Timestamp", y="Total Items", title="Product Count Logs")
-            st.plotly_chart(fig_count, use_container_width=True)
-            
-        st.write("### Historical Log")
-        st.dataframe(df_scans, hide_index=True, use_container_width=True)
+        df_filtered = df_scans[(df_scans["ParsedDate"] >= start_date) & (df_scans["ParsedDate"] <= end_date)]
+        
+        if not df_filtered.empty:
+            col1, col2 = st.columns(2)
+            with col1:
+                st.write("### Retail Stock Value Over Time")
+                fig_val = px.line(df_filtered, x="Timestamp", y="Total Value ($)", title="Inventory Valuation Trend", markers=True)
+                st.plotly_chart(fig_val, use_container_width=True)
+                
+            with col2:
+                st.write("### Total Item Count Over Time")
+                fig_count = px.bar(df_filtered, x="Timestamp", y="Total Items", title="Product Count Logs")
+                st.plotly_chart(fig_count, use_container_width=True)
+                
+            st.write("### Historical Log")
+            st.dataframe(df_filtered[["Scan ID", "Timestamp", "Total Items", "Total Value ($)"]], hide_index=True, use_container_width=True)
+        else:
+            st.warning("No records found in the selected date range.")
     else:
         st.info("No scan history logged to SQLite database yet.")
+
 
 
 else:
