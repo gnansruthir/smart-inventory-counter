@@ -612,9 +612,25 @@ elif app_mode == "Analytics & History":
                 st.plotly_chart(fig_count, use_container_width=True)
                 
             st.write("### Historical Log")
-            st.dataframe(df_filtered[["Scan ID", "Timestamp", "Total Items", "Total Value ($)"]], hide_index=True, use_container_width=True)
+            search_query = st.text_input("🔍 Search logs by Scan ID...", value="")
+            
+            df_display = df_filtered.copy()
+            if search_query.strip():
+                df_display = df_display[df_display["Scan ID"].astype(str).str.contains(search_query.strip())]
+                
+            st.dataframe(df_display[["Scan ID", "Timestamp", "Total Items", "Total Value ($)"]], hide_index=True, use_container_width=True)
+            
+            # Export history log button
+            csv_history = df_display[["Scan ID", "Timestamp", "Total Items", "Total Value ($)"]].to_csv(index=False)
+            st.download_button(
+                label="📥 Export History Log to CSV",
+                data=csv_history,
+                file_name="inventory_history_logs.csv",
+                mime="text/csv"
+            )
         else:
             st.warning("No records found in the selected date range.")
+
     else:
         st.info("No scan history logged to SQLite database yet.")
 
