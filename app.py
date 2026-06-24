@@ -628,6 +628,29 @@ elif app_mode == "Analytics & History":
                 file_name="inventory_history_logs.csv",
                 mime="text/csv"
             )
+            
+            # Drill-down details section
+            st.write("---")
+            st.write("### 🔍 Itemized Scan Drill-Down")
+            selected_scan_id = st.selectbox(
+                "Select a Scan ID to inspect detailed product listings",
+                options=df_display["Scan ID"].tolist()
+            )
+            
+            if selected_scan_id:
+                details = db_manager.get_scan_details(selected_scan_id)
+                if details:
+                    df_details = pd.DataFrame(details, columns=["SKU Name", "Class ID", "Count", "Unit Price"])
+                    df_details["Subtotal"] = df_details["Count"] * df_details["Unit Price"]
+                    
+                    # Formatting values for presentation
+                    df_details["Unit Price"] = df_details["Unit Price"].map(lambda x: f"${x:.2f}")
+                    df_details["Subtotal"] = df_details["Subtotal"].map(lambda x: f"${x:.2f}")
+                    
+                    st.dataframe(df_details, hide_index=True, use_container_width=True)
+                else:
+                    st.info("No item details found for the selected Scan ID.")
+
         else:
             st.warning("No records found in the selected date range.")
 
