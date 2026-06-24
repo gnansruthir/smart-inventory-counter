@@ -17,3 +17,7 @@ env/
 # OS
 .DS_Store
 Thumbs.db
+
+# Temp Files
+temp_video.mp4
+

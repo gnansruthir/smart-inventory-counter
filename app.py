@@ -243,98 +243,173 @@ if app_mode == "Static Image Upload":
 
 
 elif app_mode == "Webcam & Video Tracking":
-    st.subheader("📹 Video Tracking & Inventory Tallying")
-    st.write("Process pre-recorded videos to track inventory items. Unique IDs will prevent double-counting of objects.")
+    st.subheader("📹 Video Tracking & Live Webcam Inventory")
     
-    uploaded_video = st.file_uploader("Upload video file...", type=["mp4", "avi", "mov"])
-    
-    if uploaded_video is not None and detector is not None:
-        temp_file_path = "temp_video.mp4"
-        with open(temp_file_path, "wb") as f:
-            f.write(uploaded_video.read())
-            
-        video_cap = cv2.VideoCapture(temp_file_path)
-        st_frame = st.empty()
-        st_stats = st.empty()
-        tracked_objects = {}
+    input_source = st.radio("Choose Input Source", ["Pre-recorded Video File", "Live Webcam Shelf Snapshot"])
+
+    if input_source == "Pre-recorded Video File":
+        st.write("Process pre-recorded videos to track inventory items. Unique IDs will prevent double-counting of objects.")
+        uploaded_video = st.file_uploader("Upload video file...", type=["mp4", "avi", "mov"])
         
-        while video_cap.isOpened():
-            ret, frame = video_cap.read()
-            if not ret:
-                break
+        if uploaded_video is not None and detector is not None:
+            temp_file_path = "temp_video.mp4"
+            with open(temp_file_path, "wb") as f:
+                f.write(uploaded_video.read())
                 
-            annotated_frame, active_tracks = detector.track_frame(frame)
-            for track_id, class_name in active_tracks.items():
-                tracked_objects[track_id] = class_name
-                
-            st_frame.image(annotated_frame, use_container_width=True)
+            video_cap = cv2.VideoCapture(temp_file_path)
+            st_frame = st.empty()
+            st_stats = st.empty()
+            tracked_objects = {}
             
-            class_counts = {}
-            for class_name in tracked_objects.values():
-                class_counts[class_name] = class_counts.get(class_name, 0) + 1
-                
-            tally_data = []
-            total_value = 0.0
-            total_items = 0
-            
-            for detected_class, count in class_counts.items():
-                mapping = sku_mapping.get(detected_class, {
-                    "sku_name": f"Unmapped ({detected_class})",
-                    "price": 0.0,
-                    "low_stock_threshold": 0
-                })
-                sku_name = mapping["sku_name"]
-                price = mapping["price"]
-                subtotal = count * price
-                total_value += subtotal
-                total_items += count
-                
-                tally_data.append({
-                    "SKU Name": sku_name,
-                    "Total Tracked": count,
-                    "Price": f"${price:.2f}",
-                    "Total Value": f"${subtotal:.2f}"
-                })
-                
-            with st_stats.container():
-                st.write("### Real-time Tracking Statistics")
-                st.markdown(f"**Total Unique Items Tracked:** {total_items} | **Cumulative Valuation:** ${total_value:.2f}")
-                if tally_data:
-                    st.dataframe(pd.DataFrame(tally_data), hide_index=True, use_container_width=True)
+            while video_cap.isOpened():
+                ret, frame = video_cap.read()
+                if not ret:
+                    break
                     
-        video_cap.release()
-        if os.path.exists(temp_file_path):
-            os.remove(temp_file_path)
-            
-        if st.button("💾 Log Video Scanning Results to DB"):
-            db_items = []
-            class_counts = {}
-            for class_name in tracked_objects.values():
-                class_counts[class_name] = class_counts.get(class_name, 0) + 1
+                annotated_frame, active_tracks = detector.track_frame(frame)
+                for track_id, class_name in active_tracks.items():
+                    tracked_objects[track_id] = class_name
+                    
+                st_frame.image(annotated_frame, use_container_width=True)
                 
-            total_value = 0.0
-            total_items = 0
-            for detected_class, count in class_counts.items():
-                mapping = sku_mapping.get(detected_class, {
-                    "sku_name": f"Unmapped ({detected_class})",
-                    "price": 0.0,
-                    "low_stock_threshold": 0
-                })
-                sku_name = mapping["sku_name"]
-                price = mapping["price"]
-                total_value += count * price
-                total_items += count
-                db_items.append({
-                    'sku_name': sku_name,
-                    'detected_class': detected_class,
-                    'count': count,
-                    'unit_price': price
-                })
-            try:
-                db_manager.log_scan(total_items, total_value, db_items)
-                st.success("Successfully logged track counts to SQLite!")
-            except Exception as e:
-                st.error(f"Failed to log: {e}")
+                class_counts = {}
+                for class_name in tracked_objects.values():
+                    class_counts[class_name] = class_counts.get(class_name, 0) + 1
+                    
+                tally_data = []
+                total_value = 0.0
+                total_items = 0
+                
+                for detected_class, count in class_counts.items():
+                    mapping = sku_mapping.get(detected_class, {
+                        "sku_name": f"Unmapped ({detected_class})",
+                        "price": 0.0,
+                        "low_stock_threshold": 0
+                    })
+                    sku_name = mapping["sku_name"]
+                    price = mapping["price"]
+                    subtotal = count * price
+                    total_value += subtotal
+                    total_items += count
+                    
+                    tally_data.append({
+                        "SKU Name": sku_name,
+                        "Total Tracked": count,
+                        "Price": f"${price:.2f}",
+                        "Total Value": f"${subtotal:.2f}"
+                    })
+                    
+                with st_stats.container():
+                    st.write("### Real-time Tracking Statistics")
+                    st.markdown(f"**Total Unique Items Tracked:** {total_items} | **Cumulative Valuation:** ${total_value:.2f}")
+                    if tally_data:
+                        st.dataframe(pd.DataFrame(tally_data), hide_index=True, use_container_width=True)
+                        
+            video_cap.release()
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
+                
+            if st.button("💾 Log Video Scanning Results to DB"):
+                db_items = []
+                class_counts = {}
+                for class_name in tracked_objects.values():
+                    class_counts[class_name] = class_counts.get(class_name, 0) + 1
+                    
+                total_value = 0.0
+                total_items = 0
+                for detected_class, count in class_counts.items():
+                    mapping = sku_mapping.get(detected_class, {
+                        "sku_name": f"Unmapped ({detected_class})",
+                        "price": 0.0,
+                        "low_stock_threshold": 0
+                    })
+                    sku_name = mapping["sku_name"]
+                    price = mapping["price"]
+                    total_value += count * price
+                    total_items += count
+                    db_items.append({
+                        'sku_name': sku_name,
+                        'detected_class': detected_class,
+                        'count': count,
+                        'unit_price': price
+                    })
+                try:
+                    db_manager.log_scan(total_items, total_value, db_items)
+                    st.success("Successfully logged track counts to SQLite!")
+                except Exception as e:
+                    st.error(f"Failed to log: {e}")
+
+    else:
+        st.write("Capture a snapshot of your physical shelf directly using your device's camera to run item detections.")
+        webcam_image = st.camera_input("Capture shelf snapshot via webcam")
+        
+        if webcam_image is not None and detector is not None:
+            col1, col2 = st.columns([2, 1])
+            with col1:
+                st.write("### Webcam Frame Capture")
+                with st.spinner("Processing webcam frame..."):
+                    try:
+                        annotated_image, counts = detector.detect_image(webcam_image)
+                        st.image(annotated_image, caption="Processed Webcam Snapshot", use_container_width=True)
+                    except Exception as e:
+                        st.error(f"Error processing frame: {e}")
+                        counts = {}
+            with col2:
+                st.write("### Current Counts & Evaluation")
+                if counts:
+                    tally_data = []
+                    total_value = 0.0
+                    total_items = 0
+                    low_stock_triggered = []
+                    
+                    for detected_class, count in counts.items():
+                        mapping = sku_mapping.get(detected_class, {
+                            "sku_name": f"Unmapped ({detected_class})",
+                            "price": 0.0,
+                            "low_stock_threshold": 0
+                        })
+                        sku_name = mapping["sku_name"]
+                        price = mapping["price"]
+                        threshold = mapping["low_stock_threshold"]
+                        subtotal = count * price
+                        total_value += subtotal
+                        total_items += count
+                        
+                        if count < threshold:
+                            is_low_stock = "⚠️ Low Stock"
+                            low_stock_triggered.append(f"{sku_name} (Current: {count} | Min: {threshold})")
+                        else:
+                            is_low_stock = "✅ OK"
+                        
+                        tally_data.append({
+                            "Detected Class": detected_class,
+                            "SKU Name": sku_name,
+                            "Count": count,
+                            "Price ($)": f"${price:.2f}",
+                            "Subtotal": f"${subtotal:.2f}",
+                            "Status": is_low_stock,
+                            "_raw_subtotal": subtotal,
+                            "_raw_price": price
+                        })
+                    
+                    st.markdown(f"**Total Items:** {total_items} | **Valuation:** ${total_value:.2f}")
+                    st.dataframe(pd.DataFrame(tally_data)[["SKU Name", "Count", "Price ($)", "Subtotal", "Status"]], hide_index=True, use_container_width=True)
+                    
+                    if low_stock_triggered:
+                        st.error("⚠️ Low stock items found!")
+                        for warning in low_stock_triggered:
+                            st.markdown(f"- {warning}")
+                            
+                    if st.button("💾 Log Webcam Scan to DB"):
+                        db_items = [{'sku_name': item['SKU Name'], 'detected_class': item['Detected Class'], 'count': item['Count'], 'unit_price': item['_raw_price']} for item in tally_data]
+                        try:
+                            db_manager.log_scan(total_items, total_value, db_items)
+                            st.success("Logged scan successfully!")
+                        except Exception as e:
+                            st.error(f"Failed to log: {e}")
+                else:
+                    st.info("No items detected in webcam snapshot.")
+
 
 elif app_mode == "Before/After Comparison":
     st.subheader("⚖️ Shelf Comparison (Morning vs. Evening)")
