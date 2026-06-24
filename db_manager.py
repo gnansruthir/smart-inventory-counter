@@ -84,3 +84,11 @@ class DBManager:
             cursor.execute("DELETE FROM scan_items")
             cursor.execute("DELETE FROM scans")
             conn.commit()
+
+    def delete_single_scan(self, scan_id):
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM scan_items WHERE scan_id = ?", (scan_id,))
+            cursor.execute("DELETE FROM scans WHERE id = ?", (scan_id,))
+            conn.commit()
+

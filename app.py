@@ -600,6 +600,25 @@ elif app_mode == "Alert Settings & Logs":
     # Database reset danger section
     st.write("---")
     st.write("### ⚠️ Danger Zone")
+    
+    st.write("#### Delete a Specific Scan Record")
+    scans_list = db_manager.get_all_scans()
+    if scans_list:
+        scan_ids = [s[0] for s in scans_list]
+        with st.form("delete_single_scan_form"):
+            scan_id_to_del = st.selectbox("Select Scan ID to delete", options=[""] + scan_ids)
+            del_single_btn = st.form_submit_button("🗑️ Delete Selected Scan")
+            if del_single_btn and scan_id_to_del:
+                try:
+                    db_manager.delete_single_scan(scan_id_to_del)
+                    st.success(f"Successfully deleted Scan ID: {scan_id_to_del}!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Failed to delete scan: {e}")
+    else:
+        st.info("No scans available to delete.")
+        
+    st.write("#### Reset Entire Database")
     st.warning("Clearing database scan history is irreversible!")
     if st.button("🗑️ Reset & Clear Scan Database Logs"):
         try:
@@ -607,6 +626,7 @@ elif app_mode == "Alert Settings & Logs":
             st.success("Successfully cleared all scanning history records!")
         except Exception as e:
             st.error(f"Failed to clear database logs: {e}")
+
 
 
 elif app_mode == "Analytics & History":
