@@ -693,29 +693,40 @@ elif app_mode == "Analytics & History":
         df_filtered = df_scans[(df_scans["ParsedDate"] >= start_date) & (df_scans["ParsedDate"] <= end_date)]
         
         st.write("### ⚙️ Visualization Settings")
-        col_c1, col_c2 = st.columns(2)
+        col_c1, col_c2, col_c3 = st.columns(3)
         with col_c1:
             val_chart_type = st.selectbox("Valuation Chart Format", ["Line Chart", "Area Chart"])
         with col_c2:
             qty_chart_type = st.selectbox("Quantity Chart Format", ["Bar Chart", "Line Chart"])
+        with col_c3:
+            color_theme = st.selectbox("Dashboard Color Scheme", ["Classic Indigo", "Forest Emerald", "Sunset Amber", "Crimson Coral"])
+            
+        theme_colors = {
+            "Classic Indigo": ["#4f46e5"],
+            "Forest Emerald": ["#10b981"],
+            "Sunset Amber": ["#f59e0b"],
+            "Crimson Coral": ["#ef4444"]
+        }
+        chosen_color = theme_colors.get(color_theme, ["#4f46e5"])
             
         if not df_filtered.empty:
             col1, col2 = st.columns(2)
             with col1:
                 st.write("### Retail Stock Value Over Time")
                 if val_chart_type == "Area Chart":
-                    fig_val = px.area(df_filtered, x="Timestamp", y="Total Value ($)", title="Inventory Valuation Trend")
+                    fig_val = px.area(df_filtered, x="Timestamp", y="Total Value ($)", title="Inventory Valuation Trend", color_discrete_sequence=chosen_color)
                 else:
-                    fig_val = px.line(df_filtered, x="Timestamp", y="Total Value ($)", title="Inventory Valuation Trend", markers=True)
+                    fig_val = px.line(df_filtered, x="Timestamp", y="Total Value ($)", title="Inventory Valuation Trend", markers=True, color_discrete_sequence=chosen_color)
                 st.plotly_chart(fig_val, use_container_width=True)
                 
             with col2:
                 st.write("### Total Item Count Over Time")
                 if qty_chart_type == "Line Chart":
-                    fig_count = px.line(df_filtered, x="Timestamp", y="Total Items", title="Product Count Logs", markers=True)
+                    fig_count = px.line(df_filtered, x="Timestamp", y="Total Items", title="Product Count Logs", markers=True, color_discrete_sequence=chosen_color)
                 else:
-                    fig_count = px.bar(df_filtered, x="Timestamp", y="Total Items", title="Product Count Logs")
+                    fig_count = px.bar(df_filtered, x="Timestamp", y="Total Items", title="Product Count Logs", color_discrete_sequence=chosen_color)
                 st.plotly_chart(fig_count, use_container_width=True)
+
 
                 
             st.write("### Historical Log")
