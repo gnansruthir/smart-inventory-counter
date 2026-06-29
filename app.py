@@ -540,7 +540,37 @@ elif app_mode == "SKU Management":
             st.success(f"Removed SKU mapping for class '{class_to_delete}'.")
             st.rerun()
 
+    # Backup & Restore Catalog section
+    st.write("---")
+    st.write("### 💾 Backup & Restore Catalog Configurations")
+    col_b1, col_b2 = st.columns(2)
+    with col_b1:
+        st.write("#### Export Configurations")
+        json_backup_str = json.dumps(sku_mapping, indent=2)
+        st.download_button(
+            label="📤 Download SKU Mapping Backup (.json)",
+            data=json_backup_str,
+            file_name="sku_mapping_backup.json",
+            mime="application/json"
+        )
+    with col_b2:
+        st.write("#### Import / Restore Configurations")
+        uploaded_backup_file = st.file_uploader("Upload SKU Mapping Backup File", type=["json"], key="sku_backup_upload")
+        if uploaded_backup_file is not None:
+            try:
+                restored_mapping = json.load(uploaded_backup_file)
+                if isinstance(restored_mapping, dict):
+                    save_sku_mapping(restored_mapping)
+                    st.success("Successfully restored SKU catalog configurations from backup!")
+                    st.rerun()
+                else:
+                    st.error("Invalid backup file format.")
+            except Exception as ex:
+                st.error(f"Failed to restore backup: {ex}")
+
+    st.write("---")
     st.write("### Active SKU Catalog")
+
     if sku_mapping:
         icons_map = {
             "bottle": "🥤",
