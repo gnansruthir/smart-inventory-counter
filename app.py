@@ -818,15 +818,27 @@ elif app_mode == "Analytics & History":
                 details = db_manager.get_scan_details(selected_scan_id)
                 if details:
                     df_details = pd.DataFrame(details, columns=["SKU Name", "Class ID", "Count", "Unit Price"])
-                    df_details["Subtotal"] = df_details["Count"] * df_details["Unit Price"]
+                    df_details["Subtotal_Raw"] = df_details["Count"] * df_details["Unit Price"]
                     
-                    # Formatting values for presentation
-                    df_details["Unit Price"] = df_details["Unit Price"].map(lambda x: f"${x:.2f}")
-                    df_details["Subtotal"] = df_details["Subtotal"].map(lambda x: f"${x:.2f}")
-                    
-                    st.dataframe(df_details, hide_index=True, use_container_width=True)
+                    col_det1, col_det2 = st.columns(2)
+                    with col_det1:
+                        df_formatted = df_details.copy()
+                        df_formatted["Unit Price"] = df_formatted["Unit Price"].map(lambda x: f"${x:.2f}")
+                        df_formatted["Subtotal"] = df_formatted["Subtotal_Raw"].map(lambda x: f"${x:.2f}")
+                        st.dataframe(df_formatted[["SKU Name", "Class ID", "Count", "Unit Price", "Subtotal"]], hide_index=True, use_container_width=True)
+                    with col_det2:
+                        fig_pie = px.pie(
+                            df_details,
+                            names="SKU Name",
+                            values="Count",
+                            title=f"Category Distribution (Scan ID: {selected_scan_id})",
+                            hole=0.4,
+                            color_discrete_sequence=px.colors.qualitative.Pastel
+                        )
+                        st.plotly_chart(fig_pie, use_container_width=True)
                 else:
                     st.info("No item details found for the selected Scan ID.")
+
 
         else:
             st.warning("No records found in the selected date range.")
