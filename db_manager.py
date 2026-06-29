@@ -31,7 +31,18 @@ class DBManager:
                     FOREIGN KEY (scan_id) REFERENCES scans (id)
                 )
             """)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS alert_history (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    timestamp TEXT NOT NULL,
+                    sku_name TEXT NOT NULL,
+                    class_id TEXT NOT NULL,
+                    current_count INTEGER NOT NULL,
+                    threshold INTEGER NOT NULL
+                )
+            """)
             conn.commit()
+
 
     def log_scan(self, total_items, total_value, item_breakdown):
         """
@@ -83,6 +94,7 @@ class DBManager:
             cursor = conn.cursor()
             cursor.execute("DELETE FROM scan_items")
             cursor.execute("DELETE FROM scans")
+            cursor.execute("DELETE FROM alert_history")
             conn.commit()
 
     def delete_single_scan(self, scan_id):
@@ -91,4 +103,21 @@ class DBManager:
             cursor.execute("DELETE FROM scan_items WHERE scan_id = ?", (scan_id,))
             cursor.execute("DELETE FROM scans WHERE id = ?", (scan_id,))
             conn.commit()
+
+    def log_alert(self, sku_name, class_id, current_count, threshold):
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO alert_history (timestamp, sku_name, class_id, current_count, threshold)
+                VALUES (?, ?, ?, ?, ?)
+            """, (timestamp, sku_name, class_id, current_count, threshold))
+            conn.commit()
+
+    def get_all_alerts(self):
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, timestamp, sku_name, class_id, current_count, threshold FROM alert_history ORDER BY id DESC")
+            return cursor.fetchall()
+
 

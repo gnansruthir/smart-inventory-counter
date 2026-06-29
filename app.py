@@ -218,6 +218,17 @@ if app_mode == "Static Image Upload":
                         db_manager.log_scan(total_items, total_value, db_items)
                         st.success("Successfully logged scan results to SQLite!")
                         
+                        # Log low stock alerts
+                        for item in tally_data:
+                            if item["Status"] == "⚠️ Low Stock":
+                                db_manager.log_alert(
+                                    item["SKU Name"],
+                                    item["Detected Class"],
+                                    item["Count"],
+                                    sku_mapping.get(item["Detected Class"], {}).get("low_stock_threshold", 0)
+                                )
+
+                        
                         # Trigger simulated notification if configurations exist
                         if low_stock_triggered and os.path.exists("alert_config.json"):
                             with open("alert_config.json", "r") as f:
@@ -423,8 +434,19 @@ elif app_mode == "Webcam & Video Tracking":
                         try:
                             db_manager.log_scan(total_items, total_value, db_items)
                             st.success("Logged scan successfully!")
+                            
+                            # Log low stock alerts
+                            for item in tally_data:
+                                if item["Status"] == "⚠️ Low Stock":
+                                    db_manager.log_alert(
+                                        item["SKU Name"],
+                                        item["Detected Class"],
+                                        item["Count"],
+                                        sku_mapping.get(item["Detected Class"], {}).get("low_stock_threshold", 0)
+                                    )
                         except Exception as e:
                             st.error(f"Failed to log: {e}")
+
                 else:
                     st.info("No items detected in webcam snapshot.")
 
@@ -598,9 +620,30 @@ elif app_mode == "Alert Settings & Logs":
                 json.dump(alert_config, f, indent=2)
             st.success("Successfully saved notification channel credentials!")
 
+    # Render historical alert event frequency
+    st.write("---")
+    st.write("### 📈 Low-Stock Warning Event History")
+    alert_logs = db_manager.get_all_alerts()
+    if alert_logs:
+        df_alerts_hist = pd.DataFrame(alert_logs, columns=["Alert ID", "Timestamp", "SKU Name", "Class ID", "Current Count", "Threshold"])
+        
+        fig_alert_freq = px.bar(
+            df_alerts_hist.groupby("SKU Name").size().reset_index(name="Alert Frequency"),
+            x="SKU Name",
+            y="Alert Frequency",
+            title="Low-Stock Alert Trigger Frequency per Product",
+            color="SKU Name"
+        )
+        st.plotly_chart(fig_alert_freq, use_container_width=True)
+        
+        st.dataframe(df_alerts_hist[["Timestamp", "SKU Name", "Class ID", "Current Count", "Threshold"]], hide_index=True, use_container_width=True)
+    else:
+        st.info("No stock alert occurrences logged yet.")
+
     # Database reset danger section
     st.write("---")
     st.write("### ⚠️ Danger Zone")
+
     
     st.write("#### Delete a Specific Scan Record")
     scans_list = db_manager.get_all_scans()
