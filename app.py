@@ -683,7 +683,36 @@ elif app_mode == "Analytics & History":
         df_scans = pd.DataFrame(scans, columns=["Scan ID", "Timestamp", "Total Items", "Total Value ($)"])
         df_scans["ParsedDate"] = pd.to_datetime(df_scans["Timestamp"]).dt.date
         
+        total_scans_logged = len(df_scans)
+        max_valuation_logged = df_scans["Total Value ($)"].max()
+        avg_valuation_logged = df_scans["Total Value ($)"].mean()
+        
+        alerts_list = db_manager.get_all_alerts()
+        total_alerts_logged = len(alerts_list) if alerts_list else 0
+        
+        st.markdown(f"""
+            <div style="display: flex; gap: 10px; margin-bottom: 25px;">
+                <div class="metric-card" style="flex: 1; text-align: center;">
+                    <span style="color: #94a3b8; font-size: 0.85rem;">TOTAL SCANS</span>
+                    <h2 style="margin: 5px 0 0 0; color: #3b82f6;">{total_scans_logged}</h2>
+                </div>
+                <div class="metric-card" style="flex: 1; text-align: center;">
+                    <span style="color: #94a3b8; font-size: 0.85rem;">PEAK VALUE</span>
+                    <h2 style="margin: 5px 0 0 0; color: #10b981;">${max_valuation_logged:.2f}</h2>
+                </div>
+                <div class="metric-card" style="flex: 1; text-align: center;">
+                    <span style="color: #94a3b8; font-size: 0.85rem;">AVG VALUATION</span>
+                    <h2 style="margin: 5px 0 0 0; color: #8b5cf6;">${avg_valuation_logged:.2f}</h2>
+                </div>
+                <div class="metric-card" style="flex: 1; text-align: center;">
+                    <span style="color: #94a3b8; font-size: 0.85rem;">STOCK ALERTS</span>
+                    <h2 style="margin: 5px 0 0 0; color: #ef4444;">{total_alerts_logged}</h2>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+
         st.write("### 🔍 Filter Scan History")
+
         col_f1, col_f2 = st.columns(2)
         with col_f1:
             start_date = st.date_input("Start Date", value=df_scans["ParsedDate"].min())
