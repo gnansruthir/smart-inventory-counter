@@ -846,23 +846,46 @@ elif app_mode == "Stock Alerts Panel":
                     })
                     
             if low_stock_list:
-                df_alerts = pd.DataFrame(low_stock_list)
-                total_cost = sum(x["_raw_cost"] for x in low_stock_list)
+                st.write("#### ✏️ Customize Reorder Quantities")
+                adjusted_po_list = []
+                for item in low_stock_list:
+                    reorder_qty = st.number_input(
+                        f"Reorder quantity for {item['SKU Name']} (Calculated Deficit: {item['Deficit (To Reorder)']})",
+                        min_value=0,
+                        value=int(item['Deficit (To Reorder)']),
+                        key=f"po_{item['SKU Name']}"
+                    )
+                    price_val = float(item['Unit Price'].replace('$', ''))
+                    subtotal_cost = reorder_qty * price_val
+                    
+                    adjusted_po_list.append({
+                        "SKU Name": item['SKU Name'],
+                        "Current Count": item['Current Count'],
+                        "Min Threshold": item['Min Threshold'],
+                        "Reorder Quantity": reorder_qty,
+                        "Unit Price": item['Unit Price'],
+                        "Estimated Cost": f"${subtotal_cost:.2f}",
+                        "_raw_cost": subtotal_cost
+                    })
+                    
+                df_alerts = pd.DataFrame(adjusted_po_list)
+                total_cost = sum(x["_raw_cost"] for x in adjusted_po_list)
                 
                 st.error(f"### ⚠️ {len(low_stock_list)} Items Below Threshold!")
                 st.write("Below is the list of items that require replenishment:")
-                st.dataframe(df_alerts[["SKU Name", "Current Count", "Min Threshold", "Deficit (To Reorder)", "Unit Price", "Estimated Cost"]], hide_index=True, use_container_width=True)
+                st.dataframe(df_alerts[["SKU Name", "Current Count", "Min Threshold", "Reorder Quantity", "Unit Price", "Estimated Cost"]], hide_index=True, use_container_width=True)
                 
                 st.markdown(f"#### 💰 Total Estimated Cost to Restock: **${total_cost:.2f}**")
                 
                 # Purchase order CSV
-                csv_po = df_alerts[["SKU Name", "Deficit (To Reorder)", "Unit Price", "Estimated Cost"]].to_csv(index=False)
+                csv_po = df_alerts[["SKU Name", "Reorder Quantity", "Unit Price", "Estimated Cost"]].to_csv(index=False)
                 st.download_button(
                     label="📥 Export Purchase Reorder List to CSV",
                     data=csv_po,
                     file_name="purchase_reorder_request.csv",
                     mime="text/csv"
                 )
+
             else:
                 st.success("### 🎉 All Stock Levels are Optimal!")
                 st.write("No items are currently below their warning thresholds based on the latest scan.")
