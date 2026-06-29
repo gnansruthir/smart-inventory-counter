@@ -25,7 +25,7 @@ An automated, computer vision-powered retail inventory counting system. This pro
 
 ---
 
-## 📅 Daily Implementation Log (June 6 – June 22)
+## 📅 Daily Implementation Log (June 6 – June 28)
 
 ### **Phase 1: Foundation & Detections**
 - **Day 1 (June 6):** Workspace setup, requirements initialization, and static image scanner implementation with YOLOv8.
@@ -47,6 +47,15 @@ An automated, computer vision-powered retail inventory counting system. This pro
 - **Day 13 (June 20):** SQL query helpers to target and delete single scanning sessions from database history logs.
 - **Day 14 (June 21):** Dynamic Plotly visualization format configuration parameters (Area, Line, Bar).
 - **Day 15 (June 22):** Dedicated Stock Alerts tab reporting replenishment lists and PDF/CSV Purchase Orders.
+
+### **Phase 4: Operations & Resiliency Utilities**
+- **Day 16 (June 23):** Built persistent SQL Alert History tables tracking warning occurrences over time with Plotly alert frequency analytics.
+- **Day 17 (June 24):** Added multi-theme custom color palettes (Classic Indigo, Forest Emerald, Sunset Amber, Crimson Coral) to all Plotly analytics.
+- **Day 18 (June 25):** Implemented executive-level stats metrics cards at the top of the analytics dashboard (Total Scans, Peak Value, Average Valuation, Stock Alerts).
+- **Day 19 (June 26):** Created dynamic procurement quantity overrides on the alerts panel, updating estimated costs and CSV PO exports in real-time.
+- **Day 20 (June 27):** Developed SKU catalog JSON backup downloads and drag-and-drop config sheet restoration/imports.
+- **Day 21 (June 28):** Project documentation cleanup and consolidated daily implementation logs.
+
 
 ---
 
