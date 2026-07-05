@@ -543,19 +543,19 @@ elif app_mode == "SKU Management":
     # Backup & Restore Catalog section
     st.write("---")
     st.write("### 💾 Backup & Restore Catalog Configurations")
-    col_b1, col_b2 = st.columns(2)
+    col_b1, col_b2, col_b3 = st.columns(3)
     with col_b1:
         st.write("#### Export Configurations")
         json_backup_str = json.dumps(sku_mapping, indent=2)
         st.download_button(
-            label="📤 Download SKU Mapping Backup (.json)",
+            label="📤 Download Backup (.json)",
             data=json_backup_str,
             file_name="sku_mapping_backup.json",
             mime="application/json"
         )
     with col_b2:
-        st.write("#### Import / Restore Configurations")
-        uploaded_backup_file = st.file_uploader("Upload SKU Mapping Backup File", type=["json"], key="sku_backup_upload")
+        st.write("#### Restore (.json)")
+        uploaded_backup_file = st.file_uploader("Upload SKU json file", type=["json"], key="sku_backup_upload")
         if uploaded_backup_file is not None:
             try:
                 restored_mapping = json.load(uploaded_backup_file)
@@ -567,6 +567,33 @@ elif app_mode == "SKU Management":
                     st.error("Invalid backup file format.")
             except Exception as ex:
                 st.error(f"Failed to restore backup: {ex}")
+    with col_b3:
+        st.write("#### Bulk Import (.csv)")
+        uploaded_csv_file = st.file_uploader("Upload catalog csv file", type=["csv"], key="sku_csv_upload")
+        if uploaded_csv_file is not None:
+            try:
+                df_csv = pd.read_csv(uploaded_csv_file)
+                required_cols = ["YOLO Class ID", "Product Name", "Price", "Threshold"]
+                if all(col in df_csv.columns for col in required_cols):
+                    for _, row in df_csv.iterrows():
+                        cls_id = str(row["YOLO Class ID"]).strip().lower()
+                        sku_name = str(row["Product Name"]).strip()
+                        price = float(row["Price"])
+                        threshold = int(row["Threshold"])
+                        
+                        sku_mapping[cls_id] = {
+                            "sku_name": sku_name,
+                            "price": price,
+                            "low_stock_threshold": threshold
+                        }
+                    save_sku_mapping(sku_mapping)
+                    st.success("Successfully imported catalog mapping from CSV!")
+                    st.rerun()
+                else:
+                    st.error(f"CSV headers must be: {required_cols}")
+            except Exception as ex:
+                st.error(f"Failed to parse catalog CSV: {ex}")
+
 
     st.write("---")
     st.write("### Active SKU Catalog")
@@ -864,13 +891,10 @@ elif app_mode == "Stock Alerts Panel":
         if details:
             low_stock_list = []
             for item in details:
-                # details returns list of tuples: (sku_name, class_id, count, unit_price)
                 sku_name = item[0]
                 class_id = item[1]
                 count = item[2]
                 price = item[3]
-                
-                # Get threshold from mapping
                 mapping = sku_mapping.get(class_id, {"low_stock_threshold": 0})
                 threshold = mapping["low_stock_threshold"]
                 
