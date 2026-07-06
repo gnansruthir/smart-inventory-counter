@@ -10,6 +10,13 @@ from db_manager import DBManager
 from detector import InventoryDetector
 from report_generator import generate_pdf_report, generate_csv_report
 
+st.set_page_config(
+    page_title="Smart Shelf Tracker",
+    page_icon="📦",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
 # Initialize database manager and YOLO model
 SKU_FILE = "sku_mapping.json"
 db_manager = DBManager()
