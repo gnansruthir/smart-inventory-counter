@@ -968,8 +968,6 @@ elif app_mode == "Stock Alerts Panel":
     else:
         st.info("No scanning history logged yet. Run a shelf snapshot scan first to populate alert checks.")
 
-else:
-    st.info("The live webcam feed component is scheduled for development in Phase 3.")
 
 elif app_mode == "🛡️ Admin Panel":
     st.subheader("🛡️ Administrative Command Control")
