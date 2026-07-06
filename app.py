@@ -115,9 +115,7 @@ st.markdown("""
 st.sidebar.title("Navigation")
 app_mode = st.sidebar.radio("Go to", ["Static Image Upload", "Webcam & Video Tracking", "Before/After Comparison", "SKU Management", "Stock Alerts Panel", "Alert Settings & Logs", "Analytics & History"])
 
-st.sidebar.markdown("---")
-st.sidebar.write("### ⚙️ AI Model Settings")
-conf_threshold = st.sidebar.slider("AI Confidence Threshold", 0.05, 1.0, 0.25, 0.05)
+conf_threshold = 0.25
 
 
 
