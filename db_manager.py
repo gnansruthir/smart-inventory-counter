@@ -120,4 +120,14 @@ class DBManager:
             cursor.execute("SELECT id, timestamp, sku_name, class_id, current_count, threshold FROM alert_history ORDER BY id DESC")
             return cursor.fetchall()
 
+    def backup_database(self):
+        import shutil
+        backup_dir = os.path.join(os.path.dirname(self.db_path), "backups")
+        os.makedirs(backup_dir, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_file = os.path.join(backup_dir, f"inventory_backup_{timestamp}.db")
+        shutil.copy2(self.db_path, backup_file)
+        return backup_file
+
+
 

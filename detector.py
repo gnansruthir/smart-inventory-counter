@@ -10,7 +10,7 @@ class InventoryDetector:
         
         self.model = YOLO(model_path)
 
-    def detect_image(self, image_path_or_buf):
+    def detect_image(self, image_path_or_buf, conf=0.25):
         """
         Runs object detection on an image.
         Returns the annotated image and counts of detected classes.
@@ -26,7 +26,7 @@ class InventoryDetector:
 
         if image is None:
             raise ValueError("Could not read image source")
-        results = self.model(image)
+        results = self.model(image, conf=conf)
         result = results[0]  
         annotated_image = result.plot()  
         class_counts = {}
@@ -38,9 +38,9 @@ class InventoryDetector:
 
         return annotated_image_rgb, class_counts
 
-    def track_frame(self, frame):
+    def track_frame(self, frame, conf=0.25):
         
-        results = self.model.track(frame, persist=True, tracker="bytetrack.yaml", verbose=False)
+        results = self.model.track(frame, persist=True, tracker="bytetrack.yaml", verbose=False, conf=conf)
         result = results[0]
 
         annotated_frame = result.plot()

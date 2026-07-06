@@ -93,6 +93,11 @@ st.markdown("""
 st.sidebar.title("Navigation")
 app_mode = st.sidebar.radio("Go to", ["Static Image Upload", "Webcam & Video Tracking", "Before/After Comparison", "SKU Management", "Stock Alerts Panel", "Alert Settings & Logs", "Analytics & History"])
 
+st.sidebar.markdown("---")
+st.sidebar.write("### ⚙️ AI Model Settings")
+conf_threshold = st.sidebar.slider("AI Confidence Threshold", 0.05, 1.0, 0.25, 0.05)
+
+
 
 # Alert notifier helper (simulated SMTP / Telegram)
 def send_alert_notification(channel, recipient, message):
@@ -112,7 +117,7 @@ if app_mode == "Static Image Upload":
             st.write("### Detection Visualization")
             with st.spinner("Processing image..."):
                 try:
-                    annotated_image, counts = detector.detect_image(uploaded_file)
+                    annotated_image, counts = detector.detect_image(uploaded_file, conf=conf_threshold)
                     st.image(annotated_image, caption="Processed Image Output", use_container_width=True)
                 except Exception as e:
                     st.error(f"Error processing image: {e}")
@@ -295,7 +300,7 @@ elif app_mode == "Webcam & Video Tracking":
                 if not ret:
                     break
                     
-                annotated_frame, active_tracks = detector.track_frame(frame)
+                annotated_frame, active_tracks = detector.track_frame(frame, conf=conf_threshold)
                 for track_id, class_name in active_tracks.items():
                     tracked_objects[track_id] = class_name
                     
@@ -378,7 +383,7 @@ elif app_mode == "Webcam & Video Tracking":
                 st.write("### Webcam Frame Capture")
                 with st.spinner("Processing webcam frame..."):
                     try:
-                        annotated_image, counts = detector.detect_image(webcam_image)
+                        annotated_image, counts = detector.detect_image(webcam_image, conf=conf_threshold)
                         st.image(annotated_image, caption="Processed Webcam Snapshot", use_container_width=True)
                     except Exception as e:
                         st.error(f"Error processing frame: {e}")
@@ -469,12 +474,13 @@ elif app_mode == "Before/After Comparison":
         col_res1, col_res2 = st.columns(2)
         
         with col_res1:
-            annotated1, counts1 = detector.detect_image(img1_file)
+            annotated1, counts1 = detector.detect_image(img1_file, conf=conf_threshold)
             st.image(annotated1, caption="Morning Shelf Scan", use_container_width=True)
             
         with col_res2:
-            annotated2, counts2 = detector.detect_image(img2_file)
+            annotated2, counts2 = detector.detect_image(img2_file, conf=conf_threshold)
             st.image(annotated2, caption="Evening Shelf Scan", use_container_width=True)
+
             
         # Calculation of diff
         all_classes = set(list(counts1.keys()) + list(counts2.keys()))
@@ -735,8 +741,23 @@ elif app_mode == "Alert Settings & Logs":
         else:
             st.info("No scans available to generate a daily report summary.")
 
+    # Database backup utility card
+    st.write("---")
+    st.write("### 📦 SQLite Database Backup Configurations")
+    col_back1, col_back2 = st.columns([2, 1])
+    with col_back1:
+        st.write("Create a secure file snapshot copy of the database records to the local backup directory.")
+    with col_back2:
+        if st.button("💾 Trigger Database Backup"):
+            try:
+                b_file = db_manager.backup_database()
+                st.success(f"Successfully backed up database: `{os.path.basename(b_file)}`!")
+            except Exception as e:
+                st.error(f"Backup failed: {e}")
+
     # Database reset danger section
     st.write("---")
+
     st.write("### ⚠️ Danger Zone")
 
     admin_pwd_input = st.text_input("🔑 Enter Admin Password to Unlock Actions", type="password", key="admin_danger_pwd")
