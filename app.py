@@ -1,84 +1,18 @@
 import streamlit as st
-import cv2
-import json
-import os
 import pandas as pd
-from detector import InventoryDetector
-from db_manager import DBManager
+import os
+import json
+import cv2
+import numpy as np
 import plotly.express as px
+from datetime import datetime
+from db_manager import DBManager
+from detector import InventoryDetector
 from report_generator import generate_pdf_report, generate_csv_report
 
-
-
-# Page configuration
-st.set_page_config(
-    page_title="Smart Inventory Counter",
-    page_icon="📦",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-# Custom premium styling
-st.markdown("""
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
-        
-        html, body, [class*="css"] {
-            font-family: 'Inter', sans-serif;
-        }
-        
-        .main {
-            background-color: #0b0f19;
-            color: #f1f5f9;
-        }
-        
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'Outfit', sans-serif;
-            font-weight: 700;
-        }
-        
-        .stButton>button {
-            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-            color: white;
-            border-radius: 10px;
-            border: none;
-            padding: 10px 20px;
-            font-weight: 600;
-            font-family: 'Outfit', sans-serif;
-            box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.4);
-            transition: all 0.3s ease;
-        }
-        .stButton>button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px 0 rgba(99, 102, 241, 0.6);
-        }
-        .header-container {
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #3b0764 100%);
-            padding: 3rem;
-            border-radius: 16px;
-            margin-bottom: 2rem;
-            border: 1px solid #4338ca;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-        }
-        .metric-card {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            padding: 1.75rem;
-            border-radius: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
-            transition: transform 0.2s ease;
-        }
-        .metric-card:hover {
-            transform: scale(1.02);
-            border-color: rgba(99, 102, 241, 0.3);
-        }
-    </style>
-""", unsafe_allow_html=True)
-
-
-# Initialization of helper classes
+# Initialize database manager and YOLO model
 SKU_FILE = "sku_mapping.json"
+db_manager = DBManager()
 
 def load_sku_mapping():
     if os.path.exists(SKU_FILE):
@@ -91,7 +25,6 @@ def save_sku_mapping(mapping):
         json.dump(mapping, f, indent=2)
 
 sku_mapping = load_sku_mapping()
-db_manager = DBManager()
 
 @st.cache_resource
 def get_detector():
@@ -103,951 +36,538 @@ except Exception as e:
     st.error(f"Failed to load YOLOv8 model: {e}")
     detector = None
 
-# App Title Header
+# Custom CSS theme and branding settings
 st.markdown("""
-    <div class="header-container">
-        <h1 style='margin: 0; color: #f8fafc; font-family: "Outfit", sans-serif;'>📦 Smart Inventory Counter</h1>
-        <p style='margin: 0.5rem 0 0 0; color: #94a3b8;'>Computer Vision-Powered Retail Stock Tallying System</p>
-    </div>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
+        html, body, [class*="css"] {
+            font-family: 'Inter', sans-serif;
+        }
+        .main {
+            background-color: #0b0f19;
+            color: #f1f5f9;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+        }
+        .stButton>button {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            border-radius: 10px;
+            border: none;
+            padding: 10px 20px;
+            font-weight: 600;
+            box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.4);
+            transition: all 0.3s ease;
+        }
+        .stButton>button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px 0 rgba(99, 102, 241, 0.6);
+        }
+        .header-container {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #3b0764 100%);
+            padding: 2.5rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: 1px solid #4338ca;
+        }
+        .metric-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            padding: 1.5rem;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            margin-bottom: 15px;
+        }
+    </style>
 """, unsafe_allow_html=True)
 
-# Sidebar Navigation
-st.sidebar.title("Navigation")
-app_mode = st.sidebar.radio("Go to", ["Static Image Upload", "Webcam & Video Tracking", "Before/After Comparison", "SKU Management", "Stock Alerts Panel", "Alert Settings & Logs", "Analytics & History"])
+# Session States Configuration
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+if "user_role" not in st.session_state:
+    st.session_state.user_role = None
+if "current_page" not in st.session_state:
+    st.session_state.current_page = "Landing"
 
-conf_threshold = 0.25
-
-
-
-# Alert notifier helper (simulated SMTP / Telegram)
-def send_alert_notification(channel, recipient, message):
-    # Log alert output to simulate SMTP/Telegram API dispatch
-    st.info(f"🚀 [Notification Sent via {channel} to {recipient}]: {message}")
-
-if app_mode == "Static Image Upload":
-    st.subheader("📷 Shelf Snapshot Scanning")
-    st.write("Upload an image of your inventory shelf to run detection and calculate total inventory value.")
-
-    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
-
-    if uploaded_file is not None and detector is not None:
-        col1, col2 = st.columns([2, 1])
-
-        with col1:
-            st.write("### Detection Visualization")
-            with st.spinner("Processing image..."):
-                try:
-                    annotated_image, counts = detector.detect_image(uploaded_file, conf=conf_threshold)
-                    st.image(annotated_image, caption="Processed Image Output", use_container_width=True)
-                except Exception as e:
-                    st.error(f"Error processing image: {e}")
-                    counts = {}
-
-        with col2:
-            st.write("### Scan Breakdown")
-            if counts:
-                # Store detected counts in session state to allow manual modifications
-                if "adjusted_counts" not in st.session_state or st.button("🔄 Reset to AI Counts"):
-                    st.session_state.adjusted_counts = counts.copy()
-
-                # Add adjustment controls
-                st.write("#### ✏️ Edit Quantities (Manual Override)")
-                for cls_id in list(st.session_state.adjusted_counts.keys()):
-                    mapping = sku_mapping.get(cls_id, {"sku_name": f"Unmapped ({cls_id})"})
-                    st.session_state.adjusted_counts[cls_id] = st.number_input(
-                        f"Quantity for {mapping['sku_name']}",
-                        min_value=0,
-                        value=int(st.session_state.adjusted_counts[cls_id]),
-                        key=f"adj_{cls_id}"
-                    )
-
-                # Compile table mapping counts to SKUs using adjusted counts
-                tally_data = []
-                total_value = 0.0
-                total_items = 0
-                low_stock_triggered = []
-                
-                for detected_class, count in st.session_state.adjusted_counts.items():
-                    mapping = sku_mapping.get(detected_class, {
-                        "sku_name": f"Unmapped ({detected_class})",
-                        "price": 0.0,
-                        "low_stock_threshold": 0
-                    })
-                    
-                    sku_name = mapping["sku_name"]
-                    price = mapping["price"]
-                    threshold = mapping["low_stock_threshold"]
-                    subtotal = count * price
-                    
-                    total_value += subtotal
-                    total_items += count
-                    
-                    # Highlight if stock level is below threshold
-                    if count < threshold:
-                        is_low_stock = "⚠️ Low Stock"
-                        low_stock_triggered.append(f"{sku_name} (Current: {count} | Min: {threshold})")
-                    else:
-                        is_low_stock = "✅ OK"
-                    
-                    tally_data.append({
-                        "Detected Class": detected_class,
-                        "SKU Name": sku_name,
-                        "Count": count,
-                        "Price ($)": f"${price:.2f}",
-                        "Subtotal": f"${subtotal:.2f}",
-                        "Status": is_low_stock,
-                        "_raw_subtotal": subtotal,
-                        "_raw_price": price
-                    })
-                
-                df_tally = pd.DataFrame(tally_data)
-                
-                # Show key metrics in premium widgets
-                st.write("### Adjusted Summary")
-                st.markdown(f"""
-                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                        <div class="metric-card" style="flex: 1; text-align: center;">
-                            <span style="color: #94a3b8; font-size: 0.85rem;">TOTAL ITEMS</span>
-                            <h2 style="margin: 5px 0 0 0; color: #f8fafc;">{total_items}</h2>
-                        </div>
-                        <div class="metric-card" style="flex: 1; text-align: center;">
-                            <span style="color: #94a3b8; font-size: 0.85rem;">TOTAL VALUE</span>
-                            <h2 style="margin: 5px 0 0 0; color: #10b981;">${total_value:.2f}</h2>
-                        </div>
-                    </div>
-                """, unsafe_allow_html=True)
-                
-                st.dataframe(
-                    df_tally[["Detected Class", "SKU Name", "Count", "Price ($)", "Subtotal", "Status"]], 
-                    hide_index=True, 
-                    use_container_width=True
-                )
-
-                # Show visual warnings
-                if low_stock_triggered:
-                    st.error("### ⚠️ Low-Stock Alerts Detected!")
-                    for item in low_stock_triggered:
-                        st.markdown(f"- **{item}** requires replenishment.")
-                
-                # Log scan button
-                if st.button("💾 Commit & Log Scan to Database"):
-                    db_items = []
-                    for item in tally_data:
-                        db_items.append({
-                            'sku_name': item['SKU Name'],
-                            'detected_class': item['Detected Class'],
-                            'count': item['Count'],
-                            'unit_price': item['_raw_price']
-                        })
-                    try:
-                        db_manager.log_scan(total_items, total_value, db_items)
-                        st.success("Successfully logged scan results to SQLite!")
-                        
-                        # Log low stock alerts
-                        for item in tally_data:
-                            if item["Status"] == "⚠️ Low Stock":
-                                db_manager.log_alert(
-                                    item["SKU Name"],
-                                    item["Detected Class"],
-                                    item["Count"],
-                                    sku_mapping.get(item["Detected Class"], {}).get("low_stock_threshold", 0)
-                                )
-
-                        
-                        # Trigger simulated notification if configurations exist
-                        if low_stock_triggered and os.path.exists("alert_config.json"):
-                            with open("alert_config.json", "r") as f:
-                                alert_cfg = json.load(f)
-                            if alert_cfg.get("email_enabled"):
-                                send_alert_notification("Email/SMTP", alert_cfg["email_address"], f"Low Stock Warning: {', '.join(low_stock_triggered)}")
-                            if alert_cfg.get("telegram_enabled"):
-                                send_alert_notification("Telegram Bot", alert_cfg["telegram_chat_id"], f"Low Stock Warning: {', '.join(low_stock_triggered)}")
-                    except Exception as e:
-                        st.error(f"Failed to log scan: {e}")
-
-                
-                # Report downloads layout
-                st.write("---")
-                st.write("### 📝 Export Inventory Reports")
-                col_pdf, col_csv = st.columns(2)
-                with col_pdf:
-                    try:
-                        pdf_data = generate_pdf_report(tally_data, total_items, total_value)
-                        st.download_button(
-                            label="📄 Download PDF Report",
-                            data=pdf_data,
-                            file_name="inventory_report.pdf",
-                            mime="application/pdf"
-                        )
-                    except Exception as ex:
-                        st.error(f"Failed to build PDF download: {ex}")
-                with col_csv:
-                    try:
-                        csv_data = generate_csv_report(tally_data)
-                        st.download_button(
-                            label="📊 Download CSV Report",
-                            data=csv_data,
-                            file_name="inventory_report.csv",
-                            mime="text/csv"
-                        )
-                    except Exception as ex:
-                        st.error(f"Failed to build CSV download: {ex}")
-            else:
-                st.info("No retail products detected in this snapshot.")
-
-
-elif app_mode == "Webcam & Video Tracking":
-    st.subheader("📹 Video Tracking & Live Webcam Inventory")
+# ----------------- Landing Page -----------------
+if not st.session_state.logged_in and st.session_state.current_page == "Landing":
+    st.markdown("""
+        <div class='header-container' style='text-align: center;'>
+            <h1 style='font-size: 3rem;'>📦 Smart Shelf Tracker</h1>
+            <p style='color: #94a3b8; font-size: 1.25rem;'>Computer Vision Real-time Retail Stock & Auditing System</p>
+        </div>
+    """, unsafe_allow_html=True)
     
-    input_source = st.radio("Choose Input Source", ["Pre-recorded Video File", "Live Webcam Shelf Snapshot"])
+    st.write("### Welcome to Smart Shelf Tracker")
+    st.write("An automated retail analytics platform. Log in as an Owner or Staff member to run scans, adjust thresholds, configure reorder reports, and audit shelf inventory records.")
+    
+    if st.button("🚪 Go to Login Page"):
+        st.session_state.current_page = "Login"
+        st.rerun()
 
-    if input_source == "Pre-recorded Video File":
-        st.write("Process pre-recorded videos to track inventory items. Unique IDs will prevent double-counting of objects.")
-        uploaded_video = st.file_uploader("Upload video file...", type=["mp4", "avi", "mov"])
+# ----------------- Login Page -----------------
+elif not st.session_state.logged_in and st.session_state.current_page == "Login":
+    st.subheader("🔑 Sign In to Portal")
+    with st.form("login_form"):
+        role = st.selectbox("Select Your Role", ["Owner/Admin", "Staff"])
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        submit_login = st.form_submit_button("Verify Credentials")
         
-        if uploaded_video is not None and detector is not None:
-            temp_file_path = "temp_video.mp4"
-            with open(temp_file_path, "wb") as f:
-                f.write(uploaded_video.read())
-                
-            video_cap = cv2.VideoCapture(temp_file_path)
-            st_frame = st.empty()
-            st_stats = st.empty()
-            tracked_objects = {}
-            
-            while video_cap.isOpened():
-                ret, frame = video_cap.read()
-                if not ret:
-                    break
-                    
-                annotated_frame, active_tracks = detector.track_frame(frame, conf=conf_threshold)
-                for track_id, class_name in active_tracks.items():
-                    tracked_objects[track_id] = class_name
-                    
-                st_frame.image(annotated_frame, use_container_width=True)
-                
-                class_counts = {}
-                for class_name in tracked_objects.values():
-                    class_counts[class_name] = class_counts.get(class_name, 0) + 1
-                    
-                tally_data = []
-                total_value = 0.0
-                total_items = 0
-                
-                for detected_class, count in class_counts.items():
-                    mapping = sku_mapping.get(detected_class, {
-                        "sku_name": f"Unmapped ({detected_class})",
-                        "price": 0.0,
-                        "low_stock_threshold": 0
-                    })
-                    sku_name = mapping["sku_name"]
-                    price = mapping["price"]
-                    subtotal = count * price
-                    total_value += subtotal
-                    total_items += count
-                    
-                    tally_data.append({
-                        "SKU Name": sku_name,
-                        "Total Tracked": count,
-                        "Price": f"${price:.2f}",
-                        "Total Value": f"${subtotal:.2f}"
-                    })
-                    
-                with st_stats.container():
-                    st.write("### Real-time Tracking Statistics")
-                    st.markdown(f"**Total Unique Items Tracked:** {total_items} | **Cumulative Valuation:** ${total_value:.2f}")
-                    if tally_data:
-                        st.dataframe(pd.DataFrame(tally_data), hide_index=True, use_container_width=True)
-                        
-            video_cap.release()
-            if os.path.exists(temp_file_path):
-                os.remove(temp_file_path)
-                
-            if st.button("💾 Log Video Scanning Results to DB"):
-                db_items = []
-                class_counts = {}
-                for class_name in tracked_objects.values():
-                    class_counts[class_name] = class_counts.get(class_name, 0) + 1
-                    
-                total_value = 0.0
-                total_items = 0
-                for detected_class, count in class_counts.items():
-                    mapping = sku_mapping.get(detected_class, {
-                        "sku_name": f"Unmapped ({detected_class})",
-                        "price": 0.0,
-                        "low_stock_threshold": 0
-                    })
-                    sku_name = mapping["sku_name"]
-                    price = mapping["price"]
-                    total_value += count * price
-                    total_items += count
-                    db_items.append({
-                        'sku_name': sku_name,
-                        'detected_class': detected_class,
-                        'count': count,
-                        'unit_price': price
-                    })
-                try:
-                    db_manager.log_scan(total_items, total_value, db_items)
-                    st.success("Successfully logged track counts to SQLite!")
-                except Exception as e:
-                    st.error(f"Failed to log: {e}")
+        if submit_login:
+            if role == "Owner/Admin" and username == "admin" and password == "admin123":
+                st.session_state.logged_in = True
+                st.session_state.user_role = "Owner"
+                st.session_state.current_page = "Dashboard"
+                db_manager.log_audit("Owner", "User admin logged in successfully")
+                st.success("Welcome Owner! Loading panel...")
+                st.rerun()
+            elif role == "Staff" and username == "staff" and password == "staff123":
+                st.session_state.logged_in = True
+                st.session_state.user_role = "Staff"
+                st.session_state.current_page = "Dashboard"
+                db_manager.log_audit("Staff", "User staff logged in successfully")
+                st.success("Welcome Staff! Loading panel...")
+                st.rerun()
+            else:
+                st.error("Invalid username or password credentials. Please try again.")
 
+# ----------------- Logged-in Panel -----------------
+else:
+    # Sidebar Page Navigation config based on roles
+    st.sidebar.write(f"Logged in: **{st.session_state.user_role}**")
+    
+    if st.session_state.user_role == "Owner":
+        menu_options = [
+            "🏠 Owner Dashboard", 
+            "📋 Inventory List",
+            "📷 Static Image Upload", 
+            "📹 Live Detection", 
+            "⚖️ Before/After Comparison",
+            "⚙️ SKU Management", 
+            "📈 Reports & Analytics", 
+            "🔔 Notifications & Alerts", 
+            "📜 Audit Logs", 
+            "🔧 Settings"
+        ]
     else:
-        st.write("Capture a snapshot of your physical shelf directly using your device's camera to run item detections.")
-        webcam_image = st.camera_input("Capture shelf snapshot via webcam")
+        menu_options = [
+            "🏠 Staff Dashboard", 
+            "📋 Inventory List",
+            "📷 Static Image Upload", 
+            "📹 Live Detection", 
+            "🔔 Notifications & Alerts", 
+            "🔧 Settings"
+        ]
         
-        if webcam_image is not None and detector is not None:
+    app_mode = st.sidebar.radio("Navigate View", menu_options)
+    
+    if st.sidebar.button("🚪 Logout"):
+        db_manager.log_audit(st.session_state.user_role, f"User {st.session_state.user_role.lower()} logged out")
+        st.session_state.logged_in = False
+        st.session_state.user_role = None
+        st.session_state.current_page = "Landing"
+        st.rerun()
+
+    # Define standard classes threshold configurations check helper
+    def check_low_stock():
+        scans = db_manager.get_all_scans()
+        low_stock_alerts = []
+        if scans:
+            latest_id = scans[0][0]
+            details = db_manager.get_scan_details(latest_id)
+            for item in details:
+                sku_name, class_id, count, price = item
+                threshold = sku_mapping.get(class_id, {}).get("low_stock_threshold", 0)
+                if count < threshold:
+                    low_stock_alerts.append(f"{sku_name} (Count: {count} | Min: {threshold})")
+        return low_stock_alerts
+
+    # ----------------- Dashboard (Owner / Staff) -----------------
+    if "Dashboard" in app_mode:
+        st.subheader(f"🏠 {st.session_state.user_role} Dashboard")
+        
+        # Pull latest summaries from SQLite
+        scans = db_manager.get_all_scans()
+        total_scans = len(scans)
+        latest_val = scans[0][3] if scans else 0.0
+        alerts = check_low_stock()
+        
+        # Display key summary cards
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.markdown(f"""
+                <div class="metric-card">
+                    <span style="color: #94a3b8; font-size: 0.85rem;">TOTAL LOGGED SCANS</span>
+                    <h2>{total_scans}</h2>
+                </div>
+            """, unsafe_allow_html=True)
+        with col2:
+            st.markdown(f"""
+                <div class="metric-card">
+                    <span style="color: #94a3b8; font-size: 0.85rem;">LATEST SHELF VALUE</span>
+                    <h2 style="color: #10b981;">${latest_val:.2f}</h2>
+                </div>
+            """, unsafe_allow_html=True)
+        with col3:
+            alert_color = "#ef4444" if alerts else "#10b981"
+            alert_text = f"{len(alerts)} Warnings" if alerts else "All OK"
+            st.markdown(f"""
+                <div class="metric-card">
+                    <span style="color: #94a3b8; font-size: 0.85rem;">ALERT STATUS</span>
+                    <h2 style="color: {alert_color};">{alert_text}</h2>
+                </div>
+            """, unsafe_allow_html=True)
+
+        if alerts:
+            st.error("### ⚠️ Active Replenishment Warnings")
+            for warning in alerts:
+                st.markdown(f"- {warning}")
+        else:
+            st.success("All current shelf inventories are optimal!")
+
+        st.write("---")
+        st.write("#### Quick Actions")
+        if st.session_state.user_role == "Owner":
+            st.info("As Owner, you can add new product mappings in SKU settings, generate reports, or inspect audit logs.")
+        else:
+            st.info("As Staff, use the sidebar to scan shelves, capture webcam snapshots, and report shelf counts.")
+
+    # ----------------- Inventory List -----------------
+    elif app_mode == "📋 Inventory List":
+        st.subheader("📋 Central Inventory List")
+        scans = db_manager.get_all_scans()
+        if scans:
+            latest_id = scans[0][0]
+            st.write(f"Displaying current stock tallies based on latest **Scan ID: {latest_id}**")
+            details = db_manager.get_scan_details(latest_id)
+            if details:
+                records = []
+                for item in details:
+                    sku_name, class_id, count, price = item
+                    threshold = sku_mapping.get(class_id, {}).get("low_stock_threshold", 0)
+                    status = "⚠️ Low Stock" if count < threshold else "✅ OK"
+                    records.append({
+                        "Product Name": sku_name,
+                        "Class ID": class_id,
+                        "Current Count": count,
+                        "Price": f"${price:.2f}",
+                        "Alert Min Target": threshold,
+                        "Status": status
+                    })
+                st.dataframe(pd.DataFrame(records), hide_index=True, use_container_width=True)
+        else:
+            st.info("No scanning data logged yet. Run a static image scan to populate records.")
+
+    # ----------------- Static Image Upload -----------------
+    elif app_mode == "📷 Static Image Upload":
+        st.subheader("📷 Static Image Scanner")
+        uploaded_file = st.file_uploader("Upload shelf photograph...", type=["jpg", "jpeg", "png"])
+        
+        if uploaded_file is not None and detector is not None:
             col1, col2 = st.columns([2, 1])
             with col1:
-                st.write("### Webcam Frame Capture")
-                with st.spinner("Processing webcam frame..."):
+                st.write("### Shelf Detection View")
+                with st.spinner("Analyzing image..."):
                     try:
-                        annotated_image, counts = detector.detect_image(webcam_image, conf=conf_threshold)
-                        st.image(annotated_image, caption="Processed Webcam Snapshot", use_container_width=True)
-                    except Exception as e:
-                        st.error(f"Error processing frame: {e}")
+                        annotated_image, counts = detector.detect_image(uploaded_file)
+                        st.image(annotated_image, use_container_width=True)
+                    except Exception as ex:
+                        st.error(f"Detection failed: {ex}")
                         counts = {}
             with col2:
-                st.write("### Current Counts & Evaluation")
+                st.write("### AI Prediction Tallies")
                 if counts:
+                    if "adjusted_counts" not in st.session_state:
+                        st.session_state.adjusted_counts = counts.copy()
+                    
+                    st.write("#### ✏️ Override Tallies")
+                    for cls_id in list(st.session_state.adjusted_counts.keys()):
+                        st.session_state.adjusted_counts[cls_id] = st.number_input(
+                            f"Class: {cls_id}",
+                            min_value=0,
+                            value=int(st.session_state.adjusted_counts[cls_id])
+                        )
+                        
+                    # Calculate sums
                     tally_data = []
                     total_value = 0.0
                     total_items = 0
                     low_stock_triggered = []
-                    
-                    for detected_class, count in counts.items():
-                        mapping = sku_mapping.get(detected_class, {
-                            "sku_name": f"Unmapped ({detected_class})",
-                            "price": 0.0,
-                            "low_stock_threshold": 0
-                        })
+                    for cls_id, count in st.session_state.adjusted_counts.items():
+                        mapping = sku_mapping.get(cls_id, {"sku_name": f"Unmapped ({cls_id})", "price": 0.0, "low_stock_threshold": 0})
                         sku_name = mapping["sku_name"]
                         price = mapping["price"]
-                        threshold = mapping["low_stock_threshold"]
                         subtotal = count * price
                         total_value += subtotal
                         total_items += count
-                        
-                        if count < threshold:
-                            is_low_stock = "⚠️ Low Stock"
-                            low_stock_triggered.append(f"{sku_name} (Current: {count} | Min: {threshold})")
-                        else:
-                            is_low_stock = "✅ OK"
-                        
                         tally_data.append({
-                            "Detected Class": detected_class,
                             "SKU Name": sku_name,
                             "Count": count,
-                            "Price ($)": f"${price:.2f}",
-                            "Subtotal": f"${subtotal:.2f}",
-                            "Status": is_low_stock,
-                            "_raw_subtotal": subtotal,
-                            "_raw_price": price
+                            "Subtotal": subtotal,
+                            "_price": price,
+                            "_class": cls_id
                         })
-                    
-                    st.markdown(f"**Total Items:** {total_items} | **Valuation:** ${total_value:.2f}")
-                    st.dataframe(pd.DataFrame(tally_data)[["SKU Name", "Count", "Price ($)", "Subtotal", "Status"]], hide_index=True, use_container_width=True)
-                    
-                    if low_stock_triggered:
-                        st.error("⚠️ Low stock items found!")
-                        for warning in low_stock_triggered:
-                            st.markdown(f"- {warning}")
-                            
-                    if st.button("💾 Log Webcam Scan to DB"):
-                        db_items = [{'sku_name': item['SKU Name'], 'detected_class': item['Detected Class'], 'count': item['Count'], 'unit_price': item['_raw_price']} for item in tally_data]
-                        try:
-                            db_manager.log_scan(total_items, total_value, db_items)
-                            st.success("Logged scan successfully!")
-                            
-                            # Log low stock alerts
-                            for item in tally_data:
-                                if item["Status"] == "⚠️ Low Stock":
-                                    db_manager.log_alert(
-                                        item["SKU Name"],
-                                        item["Detected Class"],
-                                        item["Count"],
-                                        sku_mapping.get(item["Detected Class"], {}).get("low_stock_threshold", 0)
-                                    )
-                        except Exception as e:
-                            st.error(f"Failed to log: {e}")
-
-                else:
-                    st.info("No items detected in webcam snapshot.")
-
-
-elif app_mode == "Before/After Comparison":
-    st.subheader("⚖️ Shelf Comparison (Morning vs. Evening)")
-    st.write("Upload two snapshots of the same shelf to estimate items sold and computed revenue.")
-    
-    col_img1, col_img2 = st.columns(2)
-    
-    with col_img1:
-        st.write("#### 1. Baseline Shelf (e.g., Morning)")
-        img1_file = st.file_uploader("Upload morning snapshot...", type=["jpg", "png", "jpeg"], key="morning_scan")
-        
-    with col_img2:
-        st.write("#### 2. Current Shelf (e.g., Evening)")
-        img2_file = st.file_uploader("Upload evening snapshot...", type=["jpg", "png", "jpeg"], key="evening_scan")
-        
-    if img1_file and img2_file and detector is not None:
-        col_res1, col_res2 = st.columns(2)
-        
-        with col_res1:
-            annotated1, counts1 = detector.detect_image(img1_file, conf=conf_threshold)
-            st.image(annotated1, caption="Morning Shelf Scan", use_container_width=True)
-            
-        with col_res2:
-            annotated2, counts2 = detector.detect_image(img2_file, conf=conf_threshold)
-            st.image(annotated2, caption="Evening Shelf Scan", use_container_width=True)
-
-            
-        # Calculation of diff
-        all_classes = set(list(counts1.keys()) + list(counts2.keys()))
-        diff_data = []
-        total_revenue_est = 0.0
-        
-        for cls_id in all_classes:
-            cnt1 = counts1.get(cls_id, 0)
-            cnt2 = counts2.get(cls_id, 0)
-            sold = max(0, cnt1 - cnt2)
-            
-            mapping = sku_mapping.get(cls_id, {"sku_name": f"Unmapped ({cls_id})", "price": 0.0})
-            price = mapping["price"]
-            revenue = sold * price
-            total_revenue_est += revenue
-            
-            diff_data.append({
-                "SKU Name": mapping["sku_name"],
-                "Morning Count": cnt1,
-                "Evening Count": cnt2,
-                "Estimated Sold": sold,
-                "Unit Price": f"${price:.2f}",
-                "Estimated Revenue": f"${revenue:.2f}"
-            })
-            
-        st.write("### 📊 Difference Sales Analysis")
-        df_diff = pd.DataFrame(diff_data)
-        st.dataframe(df_diff, hide_index=True, use_container_width=True)
-        st.markdown(f"#### 💰 Estimated Revenue Generated between Scans: **${total_revenue_est:.2f}**")
-        
-        csv_comp = df_diff.to_csv(index=False)
-        st.download_button(
-            label="📥 Export Sales Comparison Report to CSV",
-            data=csv_comp,
-            file_name="shelf_comparison_sales_report.csv",
-            mime="text/csv"
-        )
-
-
-elif app_mode == "SKU Management":
-    st.subheader("⚙️ SKU Catalog Configuration")
-    st.write("Configure details mapping YOLO classification classes to retail SKUs.")
-    
-    with st.form("add_sku_form"):
-        st.write("### Add / Update SKU Mapping")
-        class_name = st.text_input("YOLO Class ID (e.g. 'bottle', 'cup')").lower().strip()
-        sku_name = st.text_input("Product Name (e.g. 'Pepsi 500ml')")
-        price = st.number_input("Retail Unit Price ($)", min_value=0.0, step=0.01)
-        threshold = st.number_input("Low Stock Threshold Alert", min_value=0, step=1)
-        
-        submit_btn = st.form_submit_button("Save SKU Config")
-        
-        if submit_btn:
-            if not class_name or not sku_name:
-                st.warning("Please specify both the target Class ID and the Product Name.")
-            else:
-                sku_mapping[class_name] = {
-                    "sku_name": sku_name,
-                    "price": price,
-                    "low_stock_threshold": int(threshold)
-                }
-                save_sku_mapping(sku_mapping)
-                st.success(f"Configured SKU mapping for class '{class_name}'.")
-
-    # Form to delete mappings
-    with st.form("delete_sku_form"):
-        st.write("### Delete SKU Mapping")
-        class_to_delete = st.selectbox("Select YOLO Class to delete", options=[""] + list(sku_mapping.keys()))
-        delete_btn = st.form_submit_button("Delete SKU Config")
-        if delete_btn and class_to_delete:
-            del sku_mapping[class_to_delete]
-            save_sku_mapping(sku_mapping)
-            st.success(f"Removed SKU mapping for class '{class_to_delete}'.")
-            st.rerun()
-
-    # Backup & Restore Catalog section
-    st.write("---")
-    st.write("### 💾 Backup & Restore Catalog Configurations")
-    col_b1, col_b2, col_b3 = st.columns(3)
-    with col_b1:
-        st.write("#### Export Configurations")
-        json_backup_str = json.dumps(sku_mapping, indent=2)
-        st.download_button(
-            label="📤 Download Backup (.json)",
-            data=json_backup_str,
-            file_name="sku_mapping_backup.json",
-            mime="application/json"
-        )
-    with col_b2:
-        st.write("#### Restore (.json)")
-        uploaded_backup_file = st.file_uploader("Upload SKU json file", type=["json"], key="sku_backup_upload")
-        if uploaded_backup_file is not None:
-            try:
-                restored_mapping = json.load(uploaded_backup_file)
-                if isinstance(restored_mapping, dict):
-                    save_sku_mapping(restored_mapping)
-                    st.success("Successfully restored SKU catalog configurations from backup!")
-                    st.rerun()
-                else:
-                    st.error("Invalid backup file format.")
-            except Exception as ex:
-                st.error(f"Failed to restore backup: {ex}")
-    with col_b3:
-        st.write("#### Bulk Import (.csv)")
-        uploaded_csv_file = st.file_uploader("Upload catalog csv file", type=["csv"], key="sku_csv_upload")
-        if uploaded_csv_file is not None:
-            try:
-                df_csv = pd.read_csv(uploaded_csv_file)
-                required_cols = ["YOLO Class ID", "Product Name", "Price", "Threshold"]
-                if all(col in df_csv.columns for col in required_cols):
-                    for _, row in df_csv.iterrows():
-                        cls_id = str(row["YOLO Class ID"]).strip().lower()
-                        sku_name = str(row["Product Name"]).strip()
-                        price = float(row["Price"])
-                        threshold = int(row["Threshold"])
                         
-                        sku_mapping[cls_id] = {
-                            "sku_name": sku_name,
-                            "price": price,
-                            "low_stock_threshold": threshold
-                        }
-                    save_sku_mapping(sku_mapping)
-                    st.success("Successfully imported catalog mapping from CSV!")
+                    st.write(f"**Total Valuation:** ${total_value:.2f}")
+                    if st.button("💾 Log Scan to SQLite"):
+                        db_items = []
+                        for x in tally_data:
+                            db_items.append({
+                                'sku_name': x['SKU Name'],
+                                'detected_class': x['_class'],
+                                'count': x['Count'],
+                                'unit_price': x['_price']
+                            })
+                        db_manager.log_scan(total_items, total_value, db_items)
+                        db_manager.log_audit(st.session_state.user_role, f"Logged static image scan containing {total_items} items")
+                        st.success("Logged successfully!")
+                        st.session_state.pop("adjusted_counts", None)
+                        st.rerun()
+
+    # ----------------- Live Detection -----------------
+    elif app_mode == "📹 Live Detection":
+        st.subheader("📹 Real-time Tracking Feed")
+        input_source = st.selectbox("Select Tracker Input Stream", ["Webcam Live Input", "Upload Video File"])
+        
+        if input_source == "Webcam Live Input":
+            st.write("Capture shelf snapshots via your webcam device camera:")
+            webcam_image = st.camera_input("Take snap")
+            if webcam_image is not None and detector is not None:
+                annotated_img, counts = detector.detect_image(webcam_image)
+                st.image(annotated_img, use_container_width=True)
+                
+                tally_data = []
+                total_value = 0.0
+                total_items = 0
+                for cls_id, count in counts.items():
+                    mapping = sku_mapping.get(cls_id, {"sku_name": f"Unmapped ({cls_id})", "price": 0.0})
+                    total_value += count * mapping["price"]
+                    total_items += count
+                    tally_data.append({
+                        'sku_name': mapping["sku_name"],
+                        'detected_class': cls_id,
+                        'count': count,
+                        'unit_price': mapping["price"]
+                    })
+                if st.button("💾 Log Webcam Snap to Database"):
+                    db_manager.log_scan(total_items, total_value, tally_data)
+                    db_manager.log_audit(st.session_state.user_role, f"Logged webcam snapshot scan containing {total_items} items")
+                    st.success("Webcam scan saved!")
                     st.rerun()
-                else:
-                    st.error(f"CSV headers must be: {required_cols}")
-            except Exception as ex:
-                st.error(f"Failed to parse catalog CSV: {ex}")
-
-
-    st.write("---")
-    st.write("### Active SKU Catalog")
-
-    if sku_mapping:
-        icons_map = {
-            "bottle": "🥤",
-            "cup": "☕",
-            "box": "📦",
-            "can": "🥫",
-            "packet": "✉️",
-            "bowl": "🥣"
-        }
-        
-        cols = st.columns(3)
-        for i, (cls_name, info) in enumerate(sku_mapping.items()):
-            col_idx = i % 3
-            with cols[col_idx]:
-                icon = icons_map.get(cls_name, "🛍️")
-                st.markdown(f"""
-                    <div style="background-color: #1e293b; padding: 1.25rem; border-radius: 8px; border: 1px solid #334155; margin-bottom: 15px;">
-                        <div style="font-size: 2rem; margin-bottom: 5px;">{icon}</div>
-                        <h4 style="margin: 0; color: #f8fafc;">{info['sku_name']}</h4>
-                        <p style="margin: 5px 0; color: #94a3b8; font-size: 0.85rem;">Class ID: <code>{cls_name}</code></p>
-                        <div style="display: flex; justify-content: space-between; margin-top: 10px;">
-                            <span style="color: #10b981; font-weight: bold;">${info['price']:.2f}</span>
-                            <span style="color: #f59e0b; font-size: 0.85rem;">Min Alert: {info['low_stock_threshold']}</span>
-                        </div>
-                    </div>
-                """, unsafe_allow_html=True)
-                
-        st.write("---")
-        st.write("#### Catalog Table View")
-        records = []
-        for cls_name, info in sku_mapping.items():
-            records.append({
-                "YOLO Class": cls_name,
-                "Retail Product Name": info["sku_name"],
-                "Unit Price": f"${info['price']:.2f}",
-                "Alert Threshold": info["low_stock_threshold"]
-            })
-        st.dataframe(pd.DataFrame(records), hide_index=True, use_container_width=True)
-    else:
-        st.info("No custom SKU mappings registered yet.")
-
-
-
-elif app_mode == "Alert Settings & Logs":
-    st.subheader("🔔 Notification Channels & System Alerts")
-    
-    # Load or initialize alert configs
-    CONFIG_FILE = "alert_config.json"
-    if os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, "r") as f:
-            alert_config = json.load(f)
-    else:
-        alert_config = {
-            "email_enabled": False,
-            "email_address": "manager@store.com",
-            "telegram_enabled": False,
-            "telegram_chat_id": "@SmartInventoryAlerts"
-        }
-        
-    with st.form("alert_config_form"):
-        st.write("### Configure Warning Triggers")
-        email_enabled = st.checkbox("Enable Automated Email Reports (SMTP)", value=alert_config["email_enabled"])
-        email_address = st.text_input("Manager Email Address", value=alert_config["email_address"])
-        
-        telegram_enabled = st.checkbox("Enable Instant Telegram Mobile Push Alerts", value=alert_config["telegram_enabled"])
-        telegram_chat_id = st.text_input("Telegram Chat ID / Username", value=alert_config["telegram_chat_id"])
-        
-        save_cfg = st.form_submit_button("Save Notification Settings")
-        if save_cfg:
-            alert_config = {
-                "email_enabled": email_enabled,
-                "email_address": email_address,
-                "telegram_enabled": telegram_enabled,
-                "telegram_chat_id": telegram_chat_id
-            }
-            with open(CONFIG_FILE, "w") as f:
-                json.dump(alert_config, f, indent=2)
-            st.success("Successfully saved notification channel credentials!")
-
-    # Render historical alert event frequency
-    st.write("---")
-    st.write("### 📈 Low-Stock Warning Event History")
-    alert_logs = db_manager.get_all_alerts()
-    if alert_logs:
-        df_alerts_hist = pd.DataFrame(alert_logs, columns=["Alert ID", "Timestamp", "SKU Name", "Class ID", "Current Count", "Threshold"])
-        
-        fig_alert_freq = px.bar(
-            df_alerts_hist.groupby("SKU Name").size().reset_index(name="Alert Frequency"),
-            x="SKU Name",
-            y="Alert Frequency",
-            title="Low-Stock Alert Trigger Frequency per Product",
-            color="SKU Name"
-        )
-        st.plotly_chart(fig_alert_freq, use_container_width=True)
-        
-        st.dataframe(df_alerts_hist[["Timestamp", "SKU Name", "Class ID", "Current Count", "Threshold"]], hide_index=True, use_container_width=True)
-    else:
-        st.info("No stock alert occurrences logged yet.")
-
-
-
-
-
-
-elif app_mode == "Analytics & History":
-    st.subheader("📈 Historical Trends & Scan Logs")
-    st.write("Analyze previous scans stored inside the SQLite database.")
-    
-    scans = db_manager.get_all_scans()
-    
-    if scans:
-        df_scans = pd.DataFrame(scans, columns=["Scan ID", "Timestamp", "Total Items", "Total Value ($)"])
-        df_scans["ParsedDate"] = pd.to_datetime(df_scans["Timestamp"]).dt.date
-        
-        total_scans_logged = len(df_scans)
-        max_valuation_logged = df_scans["Total Value ($)"].max()
-        avg_valuation_logged = df_scans["Total Value ($)"].mean()
-        
-        alerts_list = db_manager.get_all_alerts()
-        total_alerts_logged = len(alerts_list) if alerts_list else 0
-        
-        st.markdown(f"""
-            <div style="display: flex; gap: 10px; margin-bottom: 25px;">
-                <div class="metric-card" style="flex: 1; text-align: center;">
-                    <span style="color: #94a3b8; font-size: 0.85rem;">TOTAL SCANS</span>
-                    <h2 style="margin: 5px 0 0 0; color: #3b82f6;">{total_scans_logged}</h2>
-                </div>
-                <div class="metric-card" style="flex: 1; text-align: center;">
-                    <span style="color: #94a3b8; font-size: 0.85rem;">PEAK VALUE</span>
-                    <h2 style="margin: 5px 0 0 0; color: #10b981;">${max_valuation_logged:.2f}</h2>
-                </div>
-                <div class="metric-card" style="flex: 1; text-align: center;">
-                    <span style="color: #94a3b8; font-size: 0.85rem;">AVG VALUATION</span>
-                    <h2 style="margin: 5px 0 0 0; color: #8b5cf6;">${avg_valuation_logged:.2f}</h2>
-                </div>
-                <div class="metric-card" style="flex: 1; text-align: center;">
-                    <span style="color: #94a3b8; font-size: 0.85rem;">STOCK ALERTS</span>
-                    <h2 style="margin: 5px 0 0 0; color: #ef4444;">{total_alerts_logged}</h2>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-
-        st.write("### 🔍 Filter Scan History")
-
-        col_f1, col_f2 = st.columns(2)
-        with col_f1:
-            start_date = st.date_input("Start Date", value=df_scans["ParsedDate"].min())
-        with col_f2:
-            end_date = st.date_input("End Date", value=df_scans["ParsedDate"].max())
-            
-        df_filtered = df_scans[(df_scans["ParsedDate"] >= start_date) & (df_scans["ParsedDate"] <= end_date)]
-        
-        st.write("### ⚙️ Visualization Settings")
-        col_c1, col_c2, col_c3 = st.columns(3)
-        with col_c1:
-            val_chart_type = st.selectbox("Valuation Chart Format", ["Line Chart", "Area Chart"])
-        with col_c2:
-            qty_chart_type = st.selectbox("Quantity Chart Format", ["Bar Chart", "Line Chart"])
-        with col_c3:
-            color_theme = st.selectbox("Dashboard Color Scheme", ["Classic Indigo", "Forest Emerald", "Sunset Amber", "Crimson Coral"])
-            
-        theme_colors = {
-            "Classic Indigo": ["#4f46e5"],
-            "Forest Emerald": ["#10b981"],
-            "Sunset Amber": ["#f59e0b"],
-            "Crimson Coral": ["#ef4444"]
-        }
-        chosen_color = theme_colors.get(color_theme, ["#4f46e5"])
-            
-        if not df_filtered.empty:
-            col1, col2 = st.columns(2)
-            with col1:
-                st.write("### Retail Stock Value Over Time")
-                if val_chart_type == "Area Chart":
-                    fig_val = px.area(df_filtered, x="Timestamp", y="Total Value ($)", title="Inventory Valuation Trend", color_discrete_sequence=chosen_color)
-                else:
-                    fig_val = px.line(df_filtered, x="Timestamp", y="Total Value ($)", title="Inventory Valuation Trend", markers=True, color_discrete_sequence=chosen_color)
-                st.plotly_chart(fig_val, use_container_width=True)
-                
-            with col2:
-                st.write("### Total Item Count Over Time")
-                if qty_chart_type == "Line Chart":
-                    fig_count = px.line(df_filtered, x="Timestamp", y="Total Items", title="Product Count Logs", markers=True, color_discrete_sequence=chosen_color)
-                else:
-                    fig_count = px.bar(df_filtered, x="Timestamp", y="Total Items", title="Product Count Logs", color_discrete_sequence=chosen_color)
-                st.plotly_chart(fig_count, use_container_width=True)
-
-
-                
-            st.write("### Historical Log")
-            search_query = st.text_input("🔍 Search logs by Scan ID...", value="")
-            
-            df_display = df_filtered.copy()
-            if search_query.strip():
-                df_display = df_display[df_display["Scan ID"].astype(str).str.contains(search_query.strip())]
-                
-            st.dataframe(df_display[["Scan ID", "Timestamp", "Total Items", "Total Value ($)"]], hide_index=True, use_container_width=True)
-            
-            # Export history log button
-            csv_history = df_display[["Scan ID", "Timestamp", "Total Items", "Total Value ($)"]].to_csv(index=False)
-            st.download_button(
-                label="📥 Export History Log to CSV",
-                data=csv_history,
-                file_name="inventory_history_logs.csv",
-                mime="text/csv"
-            )
-            
-            # Drill-down details section
-            st.write("---")
-            st.write("### 🔍 Itemized Scan Drill-Down")
-            selected_scan_id = st.selectbox(
-                "Select a Scan ID to inspect detailed product listings",
-                options=df_display["Scan ID"].tolist()
-            )
-            
-            if selected_scan_id:
-                details = db_manager.get_scan_details(selected_scan_id)
-                if details:
-                    df_details = pd.DataFrame(details, columns=["SKU Name", "Class ID", "Count", "Unit Price"])
-                    df_details["Subtotal_Raw"] = df_details["Count"] * df_details["Unit Price"]
                     
-                    col_det1, col_det2 = st.columns(2)
-                    with col_det1:
-                        df_formatted = df_details.copy()
-                        df_formatted["Unit Price"] = df_formatted["Unit Price"].map(lambda x: f"${x:.2f}")
-                        df_formatted["Subtotal"] = df_formatted["Subtotal_Raw"].map(lambda x: f"${x:.2f}")
-                        st.dataframe(df_formatted[["SKU Name", "Class ID", "Count", "Unit Price", "Subtotal"]], hide_index=True, use_container_width=True)
-                    with col_det2:
-                        fig_pie = px.pie(
-                            df_details,
-                            names="SKU Name",
-                            values="Count",
-                            title=f"Category Distribution (Scan ID: {selected_scan_id})",
-                            hole=0.4,
-                            color_discrete_sequence=px.colors.qualitative.Pastel
-                        )
-                        st.plotly_chart(fig_pie, use_container_width=True)
-                else:
-                    st.info("No item details found for the selected Scan ID.")
-
-
         else:
-            st.warning("No records found in the selected date range.")
-
-    else:
-        st.info("No scan history logged to SQLite database yet.")
-
-
-
-elif app_mode == "Stock Alerts Panel":
-    st.subheader("🔔 Low-Stock Alerts & Purchase Requests")
-    st.write("Cross-references the latest scan session with catalog thresholds to identify items that need restocking.")
-    
-    scans = db_manager.get_all_scans()
-    if scans:
-        latest_scan = scans[0] # Ordered by DESC, so 0 is latest
-        latest_scan_id = latest_scan[0]
-        latest_timestamp = latest_scan[1]
-        
-        st.info(f"Analyzing Stock Levels based on **Scan ID: {latest_scan_id}** (Captured: `{latest_timestamp}`)")
-        
-        details = db_manager.get_scan_details(latest_scan_id)
-        if details:
-            low_stock_list = []
-            for item in details:
-                sku_name = item[0]
-                class_id = item[1]
-                count = item[2]
-                price = item[3]
-                mapping = sku_mapping.get(class_id, {"low_stock_threshold": 0})
-                threshold = mapping["low_stock_threshold"]
-                
-                if count < threshold:
-                    deficit = threshold - count
-                    low_stock_list.append({
-                        "SKU Name": sku_name,
-                        "Class ID": class_id,
-                        "Current Count": count,
-                        "Min Threshold": threshold,
-                        "Deficit (To Reorder)": deficit,
-                        "Unit Price": f"${price:.2f}",
-                        "Estimated Cost": f"${deficit * price:.2f}",
-                        "_raw_cost": deficit * price
-                    })
+            uploaded_video = st.file_uploader("Upload video file...", type=["mp4", "avi", "mov"])
+            if uploaded_video is not None:
+                temp_file_path = "temp_uploaded_video.mp4"
+                with open(temp_file_path, "wb") as f:
+                    f.write(uploaded_video.read())
                     
-            if low_stock_list:
-                st.write("#### ✏️ Customize Reorder Quantities")
-                adjusted_po_list = []
-                for item in low_stock_list:
-                    reorder_qty = st.number_input(
-                        f"Reorder quantity for {item['SKU Name']} (Calculated Deficit: {item['Deficit (To Reorder)']})",
-                        min_value=0,
-                        value=int(item['Deficit (To Reorder)']),
-                        key=f"po_{item['SKU Name']}"
-                    )
-                    price_val = float(item['Unit Price'].replace('$', ''))
-                    subtotal_cost = reorder_qty * price_val
-                    
-                    adjusted_po_list.append({
-                        "SKU Name": item['SKU Name'],
-                        "Current Count": item['Current Count'],
-                        "Min Threshold": item['Min Threshold'],
-                        "Reorder Quantity": reorder_qty,
-                        "Unit Price": item['Unit Price'],
-                        "Estimated Cost": f"${subtotal_cost:.2f}",
-                        "_raw_cost": subtotal_cost
-                    })
-                    
-                df_alerts = pd.DataFrame(adjusted_po_list)
-                total_cost = sum(x["_raw_cost"] for x in adjusted_po_list)
+                video_cap = cv2.VideoCapture(temp_file_path)
+                st_frame = st.empty()
+                tracked_objects = {}
                 
-                st.error(f"### ⚠️ {len(low_stock_list)} Items Below Threshold!")
-                st.write("Below is the list of items that require replenishment:")
-                st.dataframe(df_alerts[["SKU Name", "Current Count", "Min Threshold", "Reorder Quantity", "Unit Price", "Estimated Cost"]], hide_index=True, use_container_width=True)
+                while video_cap.isOpened():
+                    ret, frame = video_cap.read()
+                    if not ret:
+                        break
+                    annotated_frame, active_tracks = detector.track_frame(frame)
+                    for track_id, class_name in active_tracks.items():
+                        tracked_objects[track_id] = class_name
+                    st_frame.image(annotated_frame, use_container_width=True)
+                video_cap.release()
+                os.remove(temp_file_path)
                 
-                st.markdown(f"#### 💰 Total Estimated Cost to Restock: **${total_cost:.2f}**")
+                # Format tracked items
+                class_counts = {}
+                for cls_name in tracked_objects.values():
+                    class_counts[cls_name] = class_counts.get(cls_name, 0) + 1
+                total_items = sum(class_counts.values())
+                total_val = sum(class_counts[cls] * sku_mapping.get(cls, {"price":0.0})["price"] for cls in class_counts)
                 
-                # Purchase order CSV
-                csv_po = df_alerts[["SKU Name", "Reorder Quantity", "Unit Price", "Estimated Cost"]].to_csv(index=False)
-                st.download_button(
-                    label="📥 Export Purchase Reorder List to CSV",
-                    data=csv_po,
-                    file_name="purchase_reorder_request.csv",
-                    mime="text/csv"
-                )
+                st.write(f"**Unique Items Tracked:** {total_items} | **Valuation:** ${total_val:.2f}")
+                if st.button("💾 Log Video Track to SQL"):
+                    db_items = [{'sku_name': sku_mapping.get(cls, {"sku_name": cls})["sku_name"], 'detected_class': cls, 'count': val, 'unit_price': sku_mapping.get(cls, {"price":0.0})["price"]} for cls, val in class_counts.items()]
+                    db_manager.log_scan(total_items, total_val, db_items)
+                    db_manager.log_audit(st.session_state.user_role, f"Logged tracking video log containing {total_items} items")
+                    st.success("Video track logged!")
+                    st.rerun()
 
-            else:
-                st.success("### 🎉 All Stock Levels are Optimal!")
-                st.write("No items are currently below their warning thresholds based on the latest scan.")
+    # ----------------- SKU Management -----------------
+    elif app_mode == "⚙️ SKU Management":
+        st.subheader("⚙️ Catalog Configuration Settings")
+        if st.session_state.user_role != "Owner":
+            st.error("Authorized Owner role is required to modify SKU mappings.")
         else:
-            st.info("No item details found in the latest scan session.")
-    else:
-        st.info("No scanning history logged yet. Run a shelf snapshot scan first to populate alert checks.")
+            with st.form("add_sku_form"):
+                st.write("### Add / Update SKU Mapping")
+                class_name = st.text_input("YOLO Class ID (e.g. 'bottle', 'cup')").lower().strip()
+                sku_name = st.text_input("Product Name (e.g. 'Pepsi 500ml')")
+                price = st.number_input("Retail Unit Price ($)", min_value=0.0, step=0.01)
+                threshold = st.number_input("Low Stock Threshold Alert", min_value=0, step=1)
+                submit_btn = st.form_submit_button("Save SKU Config")
+                
+                if submit_btn and class_name and sku_name:
+                    sku_mapping[class_name] = {
+                        "sku_name": sku_name,
+                        "price": price,
+                        "low_stock_threshold": int(threshold)
+                    }
+                    save_sku_mapping(sku_mapping)
+                    db_manager.log_audit("Owner", f"Added/Updated SKU Mapping for class: {class_name}")
+                    st.success("Successfully configured SKU mapping!")
+                    st.rerun()
 
+            with st.form("delete_sku_form"):
+                st.write("### Delete SKU Mapping")
+                class_to_delete = st.selectbox("Select YOLO Class to delete", options=[""] + list(sku_mapping.keys()))
+                delete_btn = st.form_submit_button("Delete SKU Config")
+                if delete_btn and class_to_delete:
+                    del sku_mapping[class_to_delete]
+                    save_sku_mapping(sku_mapping)
+                    db_manager.log_audit("Owner", f"Deleted SKU Mapping for class: {class_to_delete}")
+                    st.success("SKU Mapping deleted!")
+                    st.rerun()
 
-elif app_mode == "🛡️ Admin Panel":
-    st.subheader("🛡️ Administrative Command Control")
-    
-    admin_pwd_input = st.text_input("🔑 Enter Admin Password to Unlock Panel", type="password", key="admin_panel_pwd")
-    
-    if admin_pwd_input == "admin123":
-        st.success("Authorized: Admin controls unlocked!")
-        
-        # Daily background scheduler simulator
-        st.write("---")
-        st.write("### ⏰ Daily Alert Report Scheduler Simulation")
-        st.write("Compile and simulate triggering an automated daily stock summary report based on current status.")
-        if st.button("🚀 Trigger Automated Daily Alert Run"):
+    # ----------------- Before/After Comparison -----------------
+    elif app_mode == "⚖️ Before/After Comparison":
+        st.subheader("⚖️ Shelf Comparison Audit")
+        col_img1, col_img2 = st.columns(2)
+        with col_img1:
+            st.write("#### Baseline Snapshot (Morning)")
+            img1 = st.file_uploader("Upload baseline snapshot...", type=["jpg","png","jpeg"], key="c_img1")
+        with col_img2:
+            st.write("#### Target Snapshot (Evening)")
+            img2 = st.file_uploader("Upload target snapshot...", type=["jpg","png","jpeg"], key="c_img2")
+            
+        if img1 and img2:
+            col_res1, col_res2 = st.columns(2)
+            with col_res1:
+                annotated1, counts1 = detector.detect_image(img1)
+                st.image(annotated1, caption="Baseline Shelf", use_container_width=True)
+            with col_res2:
+                annotated2, counts2 = detector.detect_image(img2)
+                st.image(annotated2, caption="Target Shelf", use_container_width=True)
+                
+            all_classes = set(list(counts1.keys()) + list(counts2.keys()))
+            diff_data = []
+            total_rev = 0.0
+            for cls_id in all_classes:
+                cnt1 = counts1.get(cls_id, 0)
+                cnt2 = counts2.get(cls_id, 0)
+                sold = max(0, cnt1 - cnt2)
+                mapping = sku_mapping.get(cls_id, {"sku_name": cls_id, "price": 0.0})
+                rev = sold * mapping["price"]
+                total_rev += rev
+                diff_data.append({
+                    "SKU Name": mapping["sku_name"],
+                    "Baseline Count": cnt1,
+                    "Target Count": cnt2,
+                    "Quantity Sold": sold,
+                    "Estimated Revenue": f"${rev:.2f}"
+                })
+            st.dataframe(pd.DataFrame(diff_data), hide_index=True, use_container_width=True)
+            st.write(f"**Total Revenue Generated:** ${total_rev:.2f}")
+
+    # ----------------- Reports & Analytics -----------------
+    elif app_mode == "📈 Reports & Analytics":
+        st.subheader("📈 Analytics & Reporting Dashboard")
+        if st.session_state.user_role != "Owner":
+            st.error("Owner clearance is required to view financial reports.")
+        else:
             scans = db_manager.get_all_scans()
             if scans:
-                latest_scan_id = scans[0][0]
-                details = db_manager.get_scan_details(latest_scan_id)
-                deficit_items = []
-                for item in details:
-                    sku_name, class_id, count, price = item
-                    threshold = sku_mapping.get(class_id, {}).get("low_stock_threshold", 0)
-                    if count < threshold:
-                        deficit_items.append(f"{sku_name} (Current: {count} | Threshold: {threshold})")
+                df_scans = pd.DataFrame(scans, columns=["Scan ID", "Timestamp", "Total Items", "Total Value ($)"])
+                st.write("### Valuation Trends Over Time")
+                fig_trend = px.line(df_scans, x="Timestamp", y="Total Value ($)", title="Retail Shelf Value Trends", markers=True)
+                st.plotly_chart(fig_trend, use_container_width=True)
                 
-                if deficit_items:
-                    report_body = f"DAILY INVENTORY STATUS REPORT - Scan ID: {latest_scan_id}\n"
-                    report_body += "The following items require replenishment:\n"
-                    report_body += "\n".join([f"- {x}" for x in deficit_items])
-                else:
-                    report_body = "DAILY INVENTORY STATUS REPORT - All stock levels are optimal."
-                    
-                st.code(report_body, language="text")
-                st.success("Simulated Daily Report successfully generated and dispatched!")
+                st.write("### Past Scanning Logs")
+                st.dataframe(df_scans, hide_index=True, use_container_width=True)
+                
+                # Exporters
+                csv_history = df_scans.to_csv(index=False)
+                st.download_button(
+                    label="📥 Export History Log to CSV",
+                    data=csv_history,
+                    file_name="retail_history_logs.csv",
+                    mime="text/csv"
+                )
             else:
-                st.info("No scans available to generate a daily report summary.")
+                st.info("No scanning history recorded in SQLite.")
 
-        # Database backup utility card
-        st.write("---")
-        st.write("### 📦 SQLite Database Backup Configurations")
-        col_back1, col_back2 = st.columns([2, 1])
-        with col_back1:
-            st.write("Create a secure file snapshot copy of the database records to the local backup directory.")
-        with col_back2:
-            if st.button("💾 Trigger Database Backup"):
-                try:
-                    b_file = db_manager.backup_database()
-                    st.success(f"Successfully backed up database: `{os.path.basename(b_file)}`!")
-                except Exception as e:
-                    st.error(f"Backup failed: {e}")
-
-        st.write("---")
-        st.write("### ⚠️ Danger Zone (Database Operations)")
+    # ----------------- Notifications & Alerts -----------------
+    elif app_mode == "🔔 Notifications & Alerts":
+        st.subheader("🔔 Low-Stock Alerts Panel")
+        alerts = check_low_stock()
         
-        st.write("#### Delete a Specific Scan Record")
-        scans_list = db_manager.get_all_scans()
-        if scans_list:
-            scan_ids = [s[0] for s in scans_list]
-            with st.form("delete_single_scan_form"):
-                scan_id_to_del = st.selectbox("Select Scan ID to delete", options=[""] + scan_ids)
-                del_single_btn = st.form_submit_button("🗑️ Delete Selected Scan")
-                if del_single_btn and scan_id_to_del:
-                    try:
-                        db_manager.delete_single_scan(scan_id_to_del)
-                        st.success(f"Successfully deleted Scan ID: {scan_id_to_del}!")
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Failed to delete scan: {e}")
+        if alerts:
+            st.error(f"⚠️ {len(alerts)} Inventory items are below their target targets:")
+            for item in alerts:
+                st.write(f"- {item}")
         else:
-            st.info("No scans available to delete.")
-            
-        st.write("#### Reset Entire Database")
-        st.warning("Clearing database scan history is irreversible!")
-        if st.button("🗑️ Reset & Clear Scan Database Logs"):
-            try:
+            st.success("All catalog products are fully stocked!")
+
+    # ----------------- Audit Logs -----------------
+    elif app_mode == "📜 Audit Logs":
+        st.subheader("📜 System Audit Logs")
+        if st.session_state.user_role != "Owner":
+            st.error("Owner validation is required to view operations audit logs.")
+        else:
+            logs = db_manager.get_audit_logs()
+            if logs:
+                df_logs = pd.DataFrame(logs, columns=["Log ID", "Timestamp", "User Role", "Action Description"])
+                st.dataframe(df_logs, hide_index=True, use_container_width=True)
+            else:
+                st.info("No audit logs logged in database.")
+
+    # ----------------- Settings & Backups -----------------
+    elif app_mode == "🔧 Settings":
+        st.subheader("🔧 System Configurations")
+        
+        # Backup section
+        st.write("---")
+        st.write("### 💾 Backup & Restore Catalog Mappings")
+        col_b1, col_b2, col_b3 = st.columns(3)
+        with col_b1:
+            st.write("Export Configurations")
+            json_backup_str = json.dumps(sku_mapping, indent=2)
+            st.download_button("📤 Download Backup (.json)", data=json_backup_str, file_name="sku_mapping_backup.json", mime="application/json")
+        with col_b2:
+            st.write("Restore Configurations")
+            uploaded_backup = st.file_uploader("Upload JSON", type=["json"])
+            if uploaded_backup is not None:
+                try:
+                    restored_map = json.load(uploaded_backup)
+                    save_sku_mapping(restored_map)
+                    st.success("SKU Catalog configurations restored!")
+                except Exception as e:
+                    st.error(f"Restore failed: {e}")
+        with col_b3:
+            st.write("Bulk Import Catalog")
+            uploaded_csv = st.file_uploader("Upload CSV", type=["csv"])
+            if uploaded_csv is not None:
+                try:
+                    df = pd.read_csv(uploaded_csv)
+                    for _, row in df.iterrows():
+                        sku_mapping[str(row["YOLO Class ID"]).strip().lower()] = {
+                            "sku_name": str(row["Product Name"]).strip(),
+                            "price": float(row["Price"]),
+                            "low_stock_threshold": int(row["Threshold"])
+                        }
+                    save_sku_mapping(sku_mapping)
+                    st.success("Successfully imported items from CSV!")
+                except Exception as e:
+                    st.error(f"CSV import failed: {e}")
+
+        # Danger zone
+        if st.session_state.user_role == "Owner":
+            st.write("---")
+            st.write("### ⚠️ Admin Reset Operations")
+            if st.button("🗑️ Reset SQLite Database Records"):
                 db_manager.clear_all_scans()
-                st.success("Successfully cleared all scanning history records!")
-            except Exception as e:
-                st.error(f"Failed to clear database logs: {e}")
-    else:
-        st.info("Enter password `admin123` to access administrative control actions.")
-
-
+                db_manager.log_audit("Owner", "Reset and wiped SQLite database records")
+                st.success("SQLite logs database reset successfully!")
+                st.rerun()

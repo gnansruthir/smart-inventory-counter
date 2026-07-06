@@ -41,7 +41,16 @@ class DBManager:
                     threshold INTEGER NOT NULL
                 )
             """)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS audit_logs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    timestamp TEXT NOT NULL,
+                    user_role TEXT NOT NULL,
+                    action TEXT NOT NULL
+                )
+            """)
             conn.commit()
+
 
 
     def log_scan(self, total_items, total_value, item_breakdown):
@@ -95,6 +104,7 @@ class DBManager:
             cursor.execute("DELETE FROM scan_items")
             cursor.execute("DELETE FROM scans")
             cursor.execute("DELETE FROM alert_history")
+            cursor.execute("DELETE FROM audit_logs")
             conn.commit()
 
     def delete_single_scan(self, scan_id):
@@ -128,6 +138,20 @@ class DBManager:
         backup_file = os.path.join(backup_dir, f"inventory_backup_{timestamp}.db")
         shutil.copy2(self.db_path, backup_file)
         return backup_file
+
+    def log_audit(self, role, action):
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO audit_logs (timestamp, user_role, action) VALUES (?, ?, ?)", (timestamp, role, action))
+            conn.commit()
+
+    def get_audit_logs(self):
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, timestamp, user_role, action FROM audit_logs ORDER BY id DESC")
+            return cursor.fetchall()
+
 
 
 
