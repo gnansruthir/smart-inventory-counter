@@ -697,36 +697,71 @@ elif app_mode == "Alert Settings & Logs":
     else:
         st.info("No stock alert occurrences logged yet.")
 
+    # Daily background scheduler simulator
+    st.write("---")
+    st.write("### ⏰ Daily Alert Report Scheduler Simulation")
+    st.write("Compile and simulate triggering an automated daily stock summary report based on current status.")
+    if st.button("🚀 Trigger Automated Daily Alert Run"):
+        scans = db_manager.get_all_scans()
+        if scans:
+            latest_scan_id = scans[0][0]
+            details = db_manager.get_scan_details(latest_scan_id)
+            deficit_items = []
+            for item in details:
+                sku_name, class_id, count, price = item
+                threshold = sku_mapping.get(class_id, {}).get("low_stock_threshold", 0)
+                if count < threshold:
+                    deficit_items.append(f"{sku_name} (Current: {count} | Threshold: {threshold})")
+            
+            if deficit_items:
+                report_body = f"DAILY INVENTORY STATUS REPORT - Scan ID: {latest_scan_id}\n"
+                report_body += "The following items require replenishment:\n"
+                report_body += "\n".join([f"- {x}" for x in deficit_items])
+            else:
+                report_body = "DAILY INVENTORY STATUS REPORT - All stock levels are optimal."
+                
+            st.code(report_body, language="text")
+            st.success("Simulated Daily Report successfully generated and dispatched!")
+        else:
+            st.info("No scans available to generate a daily report summary.")
+
     # Database reset danger section
     st.write("---")
     st.write("### ⚠️ Danger Zone")
 
+    admin_pwd_input = st.text_input("🔑 Enter Admin Password to Unlock Actions", type="password", key="admin_danger_pwd")
     
-    st.write("#### Delete a Specific Scan Record")
-    scans_list = db_manager.get_all_scans()
-    if scans_list:
-        scan_ids = [s[0] for s in scans_list]
-        with st.form("delete_single_scan_form"):
-            scan_id_to_del = st.selectbox("Select Scan ID to delete", options=[""] + scan_ids)
-            del_single_btn = st.form_submit_button("🗑️ Delete Selected Scan")
-            if del_single_btn and scan_id_to_del:
-                try:
-                    db_manager.delete_single_scan(scan_id_to_del)
-                    st.success(f"Successfully deleted Scan ID: {scan_id_to_del}!")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Failed to delete scan: {e}")
-    else:
-        st.info("No scans available to delete.")
+    if admin_pwd_input == "admin123":
+        st.success("Authorized: Admin controls unlocked!")
         
-    st.write("#### Reset Entire Database")
-    st.warning("Clearing database scan history is irreversible!")
-    if st.button("🗑️ Reset & Clear Scan Database Logs"):
-        try:
-            db_manager.clear_all_scans()
-            st.success("Successfully cleared all scanning history records!")
-        except Exception as e:
-            st.error(f"Failed to clear database logs: {e}")
+        st.write("#### Delete a Specific Scan Record")
+        scans_list = db_manager.get_all_scans()
+        if scans_list:
+            scan_ids = [s[0] for s in scans_list]
+            with st.form("delete_single_scan_form"):
+                scan_id_to_del = st.selectbox("Select Scan ID to delete", options=[""] + scan_ids)
+                del_single_btn = st.form_submit_button("🗑️ Delete Selected Scan")
+                if del_single_btn and scan_id_to_del:
+                    try:
+                        db_manager.delete_single_scan(scan_id_to_del)
+                        st.success(f"Successfully deleted Scan ID: {scan_id_to_del}!")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Failed to delete scan: {e}")
+        else:
+            st.info("No scans available to delete.")
+            
+        st.write("#### Reset Entire Database")
+        st.warning("Clearing database scan history is irreversible!")
+        if st.button("🗑️ Reset & Clear Scan Database Logs"):
+            try:
+                db_manager.clear_all_scans()
+                st.success("Successfully cleared all scanning history records!")
+            except Exception as e:
+                st.error(f"Failed to clear database logs: {e}")
+    else:
+        st.info("Enter password `admin123` to unlock management override controls.")
+
 
 
 
