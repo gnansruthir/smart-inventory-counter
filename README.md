@@ -2,7 +2,10 @@
 
 An automated, computer vision-powered retail inventory counting system. This project uses **YOLOv8** for real-time object detection and tracking, presenting results via an interactive **Streamlit** dashboard.
 
+**🚀 Live Demo:** [smart-inventory-counter.streamlit.app](https://smart-inventory-counter-jkmwvlbfhayngzuef3xpgz.streamlit.app/)
+
 ---
+
 
 ## 🚀 Core Features
 
