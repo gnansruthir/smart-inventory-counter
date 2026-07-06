@@ -501,8 +501,18 @@ elif app_mode == "Before/After Comparison":
             })
             
         st.write("### 📊 Difference Sales Analysis")
-        st.dataframe(pd.DataFrame(diff_data), hide_index=True, use_container_width=True)
+        df_diff = pd.DataFrame(diff_data)
+        st.dataframe(df_diff, hide_index=True, use_container_width=True)
         st.markdown(f"#### 💰 Estimated Revenue Generated between Scans: **${total_revenue_est:.2f}**")
+        
+        csv_comp = df_diff.to_csv(index=False)
+        st.download_button(
+            label="📥 Export Sales Comparison Report to CSV",
+            data=csv_comp,
+            file_name="shelf_comparison_sales_report.csv",
+            mime="text/csv"
+        )
+
 
 elif app_mode == "SKU Management":
     st.subheader("⚙️ SKU Catalog Configuration")
