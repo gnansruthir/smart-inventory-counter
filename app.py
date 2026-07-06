@@ -21,39 +21,61 @@ st.set_page_config(
 # Custom premium styling
 st.markdown("""
     <style>
-        .main {
-            background-color: #0f1115;
-            color: #e2e8f0;
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
+        
+        html, body, [class*="css"] {
+            font-family: 'Inter', sans-serif;
         }
+        
+        .main {
+            background-color: #0b0f19;
+            color: #f1f5f9;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+        }
+        
         .stButton>button {
-            background-color: #4f46e5;
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
             color: white;
-            border-radius: 8px;
+            border-radius: 10px;
             border: none;
-            padding: 8px 16px;
+            padding: 10px 20px;
             font-weight: 600;
+            font-family: 'Outfit', sans-serif;
+            box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.4);
             transition: all 0.3s ease;
         }
         .stButton>button:hover {
-            background-color: #4338ca;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px 0 rgba(99, 102, 241, 0.6);
         }
         .header-container {
-            background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%);
-            padding: 2.5rem;
-            border-radius: 12px;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #3b0764 100%);
+            padding: 3rem;
+            border-radius: 16px;
             margin-bottom: 2rem;
-            border: 1px solid #312e81;
+            border: 1px solid #4338ca;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
         }
         .metric-card {
-            background-color: #1e293b;
-            padding: 1.5rem;
-            border-radius: 10px;
-            border: 1px solid #334155;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            padding: 1.75rem;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s ease;
+        }
+        .metric-card:hover {
+            transform: scale(1.02);
+            border-color: rgba(99, 102, 241, 0.3);
         }
     </style>
 """, unsafe_allow_html=True)
+
 
 # Initialization of helper classes
 SKU_FILE = "sku_mapping.json"
