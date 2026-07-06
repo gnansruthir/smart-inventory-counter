@@ -11,8 +11,8 @@ from detector import InventoryDetector
 from report_generator import generate_pdf_report, generate_csv_report
 
 st.set_page_config(
-    page_title="Smart Shelf Tracker",
-    page_icon="📦",
+    page_title="Smart Inventory Counter System",
+   
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -98,48 +98,51 @@ if "user_role" not in st.session_state:
 if "current_page" not in st.session_state:
     st.session_state.current_page = "Landing"
 
-# ----------------- Landing Page -----------------
-if not st.session_state.logged_in and st.session_state.current_page == "Landing":
+if not st.session_state.logged_in:
     st.markdown("""
         <div class='header-container' style='text-align: center;'>
-            <h1 style='font-size: 3rem;'>📦 Smart Shelf Tracker</h1>
-            <p style='color: #94a3b8; font-size: 1.25rem;'>Computer Vision Real-time Retail Stock & Auditing System</p>
+            <h1 style='font-size: 3rem;'>Smart Inventory Counter System</h1>
         </div>
     """, unsafe_allow_html=True)
     
-    st.write("### Welcome to Smart Shelf Tracker")
-    st.write("An automated retail analytics platform. Log in as an Owner or Staff member to run scans, adjust thresholds, configure reorder reports, and audit shelf inventory records.")
+    tab_signin, tab_signup = st.tabs(["🔐 Sign In", "📝 Sign Up"])
     
-    if st.button("🚪 Go to Login Page"):
-        st.session_state.current_page = "Login"
-        st.rerun()
+    with tab_signin:
+        with st.form("signin_form"):
+            username = st.text_input("Username", key="signin_username")
+            password = st.text_input("Password", type="password", key="signin_password")
+            submit_signin = st.form_submit_button("Sign In")
+            
+            if submit_signin:
+                role = db_manager.authenticate_user(username, password)
+                if role:
+                    st.session_state.logged_in = True
+                    st.session_state.user_role = role
+                    st.session_state.current_page = "Dashboard"
+                    db_manager.log_audit(role, f"User {username} logged in successfully")
+                    st.success(f"Welcome {role}! Loading panel...")
+                    st.rerun()
+                else:
+                    st.error("Incorrect username or password credentials.")
+                    
+    with tab_signup:
+        with st.form("signup_form"):
+            reg_username = st.text_input("Choose Username", key="signup_username")
+            reg_password = st.text_input("Choose Password", type="password", key="signup_password")
+            reg_role = st.selectbox("Select Your Role", ["Owner", "Staff"], key="signup_role")
+            submit_signup = st.form_submit_button("Create Account")
+            
+            if submit_signup:
+                if not reg_username or not reg_password:
+                    st.warning("Please specify both a username and password.")
+                else:
+                    success = db_manager.add_user(reg_username, reg_password, reg_role)
+                    if success:
+                        db_manager.log_audit(reg_role, f"New user account registered: {reg_username}")
+                        st.success("Account created successfully! You can now sign in using the Sign In tab.")
+                    else:
+                        st.error("Username already exists. Please choose a different one.")
 
-# ----------------- Login Page -----------------
-elif not st.session_state.logged_in and st.session_state.current_page == "Login":
-    st.subheader("🔑 Sign In to Portal")
-    with st.form("login_form"):
-        role = st.selectbox("Select Your Role", ["Owner/Admin", "Staff"])
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        submit_login = st.form_submit_button("Verify Credentials")
-        
-        if submit_login:
-            if role == "Owner/Admin" and username == "admin" and password == "admin123":
-                st.session_state.logged_in = True
-                st.session_state.user_role = "Owner"
-                st.session_state.current_page = "Dashboard"
-                db_manager.log_audit("Owner", "User admin logged in successfully")
-                st.success("Welcome Owner! Loading panel...")
-                st.rerun()
-            elif role == "Staff" and username == "staff" and password == "staff123":
-                st.session_state.logged_in = True
-                st.session_state.user_role = "Staff"
-                st.session_state.current_page = "Dashboard"
-                db_manager.log_audit("Staff", "User staff logged in successfully")
-                st.success("Welcome Staff! Loading panel...")
-                st.rerun()
-            else:
-                st.error("Invalid username or password credentials. Please try again.")
 
 # ----------------- Logged-in Panel -----------------
 else:

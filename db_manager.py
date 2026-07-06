@@ -49,7 +49,18 @@ class DBManager:
                     action TEXT NOT NULL
                 )
             """)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    username TEXT PRIMARY KEY,
+                    password TEXT NOT NULL,
+                    role TEXT NOT NULL
+                )
+            """)
+            # Seed default users
+            cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'admin123', 'Owner')")
+            cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES ('staff', 'staff123', 'Staff')")
             conn.commit()
+
 
 
 
@@ -152,6 +163,19 @@ class DBManager:
             cursor.execute("SELECT id, timestamp, user_role, action FROM audit_logs ORDER BY id DESC")
             return cursor.fetchall()
 
+    def add_user(self, username, password, role):
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", (username, password, role))
+                conn.commit()
+                return True
+        except sqlite3.IntegrityError:
+            return False
 
-
-
+    def authenticate_user(self, username, password):
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT role FROM users WHERE username = ? AND password = ?", (username, password))
+            result = cursor.fetchone()
+            return result[0] if result else None
