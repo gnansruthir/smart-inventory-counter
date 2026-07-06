@@ -98,7 +98,7 @@ st.markdown("""
             border: 1px solid #e2e8f0 !important;
             border-radius: 16px !important;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08) !important;
-            max-width: 450px !important;
+            max-width: 350px !important;
             margin: 0 auto !important;
             padding: 2rem !important;
         }
@@ -122,7 +122,7 @@ if not st.session_state.logged_in:
     """, unsafe_allow_html=True)
     
     st.markdown("<div class='login-form-container'>", unsafe_allow_html=True)
-    tab_signin, tab_signup = st.tabs(["🔐 Sign In", "📝 Sign Up"])
+    tab_signin, tab_signup = st.tabs(["Sign In", "Sign Up"])
     
     with tab_signin:
         with st.form("signin_form"):
