@@ -121,45 +121,46 @@ if not st.session_state.logged_in:
         </div>
     """, unsafe_allow_html=True)
     
-    st.markdown("<div class='login-form-container'>", unsafe_allow_html=True)
-    tab_signin, tab_signup = st.tabs(["Sign In", "Sign Up"])
-    
-    with tab_signin:
-        with st.form("signin_form"):
-            username = st.text_input("Username", key="signin_username")
-            password = st.text_input("Password", type="password", key="signin_password")
-            submit_signin = st.form_submit_button("Sign In")
-            
-            if submit_signin:
-                role = db_manager.authenticate_user(username, password)
-                if role:
-                    st.session_state.logged_in = True
-                    st.session_state.user_role = role
-                    st.session_state.current_page = "Dashboard"
-                    db_manager.log_audit(role, f"User {username} logged in successfully")
-                    st.success(f"Welcome {role}! Loading panel...")
-                    st.rerun()
-                else:
-                    st.error("Incorrect username or password credentials.")
-                    
-    with tab_signup:
-        with st.form("signup_form"):
-            reg_username = st.text_input("Choose Username", key="signup_username")
-            reg_password = st.text_input("Choose Password", type="password", key="signup_password")
-            reg_role = st.selectbox("Select Your Role", ["Owner", "Staff"], key="signup_role")
-            submit_signup = st.form_submit_button("Create Account")
-            
-            if submit_signup:
-                if not reg_username or not reg_password:
-                    st.warning("Please specify both a username and password.")
-                else:
-                    success = db_manager.add_user(reg_username, reg_password, reg_role)
-                    if success:
-                        db_manager.log_audit(reg_role, f"New user account registered: {reg_username}")
-                        st.success("Account created successfully! You can now sign in using the Sign In tab.")
+    col_left, col_center, col_right = st.columns([1.3, 1.0, 1.3])
+    with col_center:
+        tab_signin, tab_signup = st.tabs(["Sign In", "Sign Up"])
+        
+        with tab_signin:
+            with st.form("signin_form"):
+                username = st.text_input("Username", key="signin_username")
+                password = st.text_input("Password", type="password", key="signin_password")
+                submit_signin = st.form_submit_button("Sign In")
+                
+                if submit_signin:
+                    role = db_manager.authenticate_user(username, password)
+                    if role:
+                        st.session_state.logged_in = True
+                        st.session_state.user_role = role
+                        st.session_state.current_page = "Dashboard"
+                        db_manager.log_audit(role, f"User {username} logged in successfully")
+                        st.success(f"Welcome {role}! Loading panel...")
+                        st.rerun()
                     else:
-                        st.error("Username already exists. Please choose a different one.")
-    st.markdown("</div>", unsafe_allow_html=True)
+                        st.error("Incorrect username or password credentials.")
+                        
+        with tab_signup:
+            with st.form("signup_form"):
+                reg_username = st.text_input("Choose Username", key="signup_username")
+                reg_password = st.text_input("Choose Password", type="password", key="signup_password")
+                reg_role = st.selectbox("Select Your Role", ["Owner", "Staff"], key="signup_role")
+                submit_signup = st.form_submit_button("Create Account")
+                
+                if submit_signup:
+                    if not reg_username or not reg_password:
+                        st.warning("Please specify both a username and password.")
+                    else:
+                        success = db_manager.add_user(reg_username, reg_password, reg_role)
+                        if success:
+                            db_manager.log_audit(reg_role, f"New user account registered: {reg_username}")
+                            st.success("Account created successfully! You can now sign in using the Sign In tab.")
+                        else:
+                            st.error("Username already exists. Please choose a different one.")
+
 
 
 
