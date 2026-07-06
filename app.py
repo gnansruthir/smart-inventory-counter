@@ -43,7 +43,7 @@ except Exception as e:
     st.error(f"Failed to load YOLOv8 model: {e}")
     detector = None
 
-# Custom CSS theme and branding settings
+# Custom premium styling
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
@@ -51,44 +51,60 @@ st.markdown("""
             font-family: 'Inter', sans-serif;
         }
         .main {
-            background-color: #0b0f19;
-            color: #f1f5f9;
+            background-color: #ffffff;
+            color: #0f172a;
         }
         h1, h2, h3, h4, h5, h6 {
             font-family: 'Outfit', sans-serif;
             font-weight: 700;
+            color: #0f172a;
         }
         .stButton>button {
-            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
             color: white;
             border-radius: 10px;
             border: none;
             padding: 10px 20px;
             font-weight: 600;
-            box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.4);
+            box-shadow: 0 4px 14px 0 rgba(124, 58, 237, 0.4);
             transition: all 0.3s ease;
         }
         .stButton>button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px 0 rgba(99, 102, 241, 0.6);
+            box-shadow: 0 6px 20px 0 rgba(124, 58, 237, 0.6);
         }
         .header-container {
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #3b0764 100%);
+            background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
             padding: 2.5rem;
             border-radius: 16px;
             margin-bottom: 2rem;
-            border: 1px solid #4338ca;
+            border: none;
+        }
+        .header-container h1, .header-container p {
+            color: #ffffff !important;
         }
         .metric-card {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
+            background: #ffffff;
             padding: 1.5rem;
             border-radius: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid #e2e8f0;
             margin-bottom: 15px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* Narrow container for login form */
+        .login-form-container div[data-testid="stForm"] {
+            background-color: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 16px !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08) !important;
+            max-width: 450px !important;
+            margin: 0 auto !important;
+            padding: 2rem !important;
         }
     </style>
 """, unsafe_allow_html=True)
+
 
 # Session States Configuration
 if "logged_in" not in st.session_state:
@@ -101,10 +117,11 @@ if "current_page" not in st.session_state:
 if not st.session_state.logged_in:
     st.markdown("""
         <div class='header-container' style='text-align: center;'>
-            <h1 style='font-size: 3rem;'>Smart Inventory Counter System</h1>
+            <h1 style='font-size: 3rem; margin: 0;'>Smart Inventory Counter System</h1>
         </div>
     """, unsafe_allow_html=True)
     
+    st.markdown("<div class='login-form-container'>", unsafe_allow_html=True)
     tab_signin, tab_signup = st.tabs(["🔐 Sign In", "📝 Sign Up"])
     
     with tab_signin:
@@ -142,6 +159,8 @@ if not st.session_state.logged_in:
                         st.success("Account created successfully! You can now sign in using the Sign In tab.")
                     else:
                         st.error("Username already exists. Please choose a different one.")
+    st.markdown("</div>", unsafe_allow_html=True)
+
 
 
 # ----------------- Logged-in Panel -----------------
