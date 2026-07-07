@@ -146,8 +146,8 @@ TRANSLATIONS = {
         "Log Webcam Snap to Database": "Log Webcam Snap to Database",
         "Webcam scan saved": "Webcam scan saved!",
         "Upload video file": "Upload video file...",
-        "Unique Items Tracked": "Unique Items Tracked",
-        "Valuation": "Valuation",
+        "Unique Items Tracked": "Items Counted",
+        "Valuation": "Total Value",
         "Log Video Track to SQL": "Log Video Track to SQL",
         "Video track logged": "Video track logged!",
         "Validated": "Validated",
@@ -221,7 +221,7 @@ TRANSLATIONS = {
         "Before/After Comparison": "Before/After Comparison",
         "Sensitivity": "Model Sensitivity (Lower values detect items more easily)",
         "Low stock alert toast": "Low stock detected! Please restock the shelf.",
-        "Scan Summary Breakdown": "Scan Summary Breakdown",
+        "Scan Summary Breakdown": "Summary",
         "items": "items"
     },
     "Tamil": {
@@ -298,8 +298,8 @@ TRANSLATIONS = {
         "Log Webcam Snap to Database": "வெப்கேம் படத்தை தரவுத்தளத்தில் பதிவு செய்க",
         "Webcam scan saved": "வெப்கேம் ஸ்கேன் சேமிக்கப்பட்டது!",
         "Upload video file": "வீடியோ கோப்பைப் பதிவேற்றவும்...",
-        "Unique Items Tracked": "கண்காணிக்கப்பட்ட தனித்துவமான பொருட்கள்",
-        "Valuation": "மதிப்பீடு",
+        "Unique Items Tracked": "கணக்கிடப்பட்ட பொருட்கள்",
+        "Valuation": "மொத்த மதிப்பு",
         "Log Video Track to SQL": "வீடியோ கண்காணிப்பை SQL இல் பதிவு செய்க",
         "Video track logged": "வீடியோ கண்காணிப்பு பதிவு செய்யப்பட்டது!",
         "Validated": "சரிபார்க்கப்பட்டது",
@@ -373,7 +373,7 @@ TRANSLATIONS = {
         "Before/After Comparison": "முன்பு/பின்பு ஒப்பீடு",
         "Sensitivity": "மாதிரி உணர்திறன் (குறைந்த மதிப்பு பொருட்களை எளிதாகக் கண்டறியும்)",
         "Low stock alert toast": "குறைந்த இருப்பு கண்டறியப்பட்டது! அலமாரியை நிரப்பவும்.",
-        "Scan Summary Breakdown": "ஸ்கேன் சுருக்கம்",
+        "Scan Summary Breakdown": "சுருக்கம்",
         "items": "பொருட்கள்"
     }
 }
@@ -834,7 +834,7 @@ else:
                             "_class": cls_id
                         })
                         
-                    st.write(f"**{TRANSLATIONS[st.session_state.app_lang]['Total Valuation']}:** ₹{total_value:.2f}")
+                    st.write(f"**{TRANSLATIONS[st.session_state.app_lang]['Unique Items Tracked']}:** {total_items} | **{TRANSLATIONS[st.session_state.app_lang]['Valuation']}:** ₹{total_value:.2f}")
                     
                     # Auto-log scan to SQLite
                     current_key = f"{uploaded_file.name}_{total_items}_{total_value}"
@@ -913,7 +913,6 @@ else:
                 db_manager.log_scan(total_items, total_val, db_items)
                 db_manager.log_audit(st.session_state.user_role, f"Logged tracking video log containing {total_items} items")
                 st.session_state.last_auto_logged_video = video_key
-                st.markdown(f"**{TRANSLATIONS[st.session_state.app_lang]['Validated']}**")
 
 
     # ----------------- SKU Management -----------------
