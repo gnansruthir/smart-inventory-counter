@@ -859,6 +859,12 @@ else:
         uploaded_file = st.file_uploader(TRANSLATIONS[st.session_state.app_lang]["Upload shelf photograph"], type=["jpg", "jpeg", "png"])
         
         if uploaded_file is not None and detector is not None:
+            file_key = f"img_{uploaded_file.name}_{uploaded_file.size}"
+            if st.session_state.get("current_uploaded_file_key") != file_key:
+                st.session_state.current_uploaded_file_key = file_key
+                if "adjusted_counts" in st.session_state:
+                    del st.session_state.adjusted_counts
+                    
             col1, col2 = st.columns([2, 1])
             with col1:
                 st.write("### " + TRANSLATIONS[st.session_state.app_lang]["Shelf Detection View"])
