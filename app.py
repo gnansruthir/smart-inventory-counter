@@ -113,17 +113,19 @@ st.markdown(f"""
             box-shadow: 0 6px 20px 0 rgba(124, 58, 237, 0.6);
         }}
         .header-container {{
-            background: rgba(124, 58, 237, 0.95);
-            padding: 1.5rem;
-            border-radius: 16px;
-            margin-bottom: 2rem;
-            border: none;
-            backdrop-filter: blur(4px);
+            background: transparent !important;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border: none !important;
+            backdrop-filter: none !important;
+            text-align: center;
         }}
         .header-container h1 {{
-            color: #ffffff !important;
-            font-size: 2.5rem !important;
+            color: #1e1b4b !important;
+            font-size: 3.25rem !important;
             margin: 0 !important;
+            text-shadow: 2px 2px 0px #ffffff, -2px -2px 0px #ffffff, 2px -2px 0px #ffffff, -2px 2px 0px #ffffff, 0px 4px 10px rgba(124, 58, 237, 0.7);
+            animation: floatAnimation 4s ease-in-out infinite;
         }}
         .metric-card {{
             background: #ffffff;
@@ -143,13 +145,22 @@ st.markdown(f"""
         /* Floating layout for login box */
         div[data-testid="stForm"] {{
             animation: floatAnimation 4s ease-in-out infinite;
-            background-color: rgba(255, 255, 255, 0.95) !important;
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(124, 58, 237, 0.3) !important;
+            background-color: #ffffff !important;
+            border: 2px solid #7c3aed !important;
             border-radius: 16px !important;
-            box-shadow: 0 15px 35px rgba(124, 58, 237, 0.15) !important;
+            box-shadow: 0 10px 40px rgba(124, 58, 237, 0.6) !important;
             padding: 2rem !important;
         }}
+
+        /* Force black tabs labels */
+        button[data-baseweb="tab"] {{
+            color: #000000 !important;
+        }}
+        button[data-baseweb="tab"] p {{
+            color: #000000 !important;
+            font-weight: 600 !important;
+        }}
+
     </style>
 """, unsafe_allow_html=True)
 
