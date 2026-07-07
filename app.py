@@ -666,7 +666,6 @@ else:
             "SKU Management", 
             "Inventory List", 
             "Reports & Analytics", 
-            "Low stock count", 
             "Audit Logs", 
             "Settings"
         ]
@@ -675,8 +674,7 @@ else:
             "Staff Dashboard", 
             "Live Detection", 
             "Static Image Upload", 
-            "Inventory List", 
-            "Low stock count"
+            "Inventory List"
         ]
 
     # Map the English options to the app_mode values used in the conditional checks
@@ -688,7 +686,6 @@ else:
         "SKU Management": "SKU Management",
         "Inventory List": "Inventory List",
         "Reports & Analytics": "Reports & Analytics",
-        "Low stock count": "Low stock count",
         "Audit Logs": "Audit Logs",
         "Settings": "Settings"
     }
@@ -724,13 +721,16 @@ else:
 
     # ----------------- Dashboard (Owner / Staff) -----------------
     if "Dashboard" in app_mode:
+        alerts = check_low_stock()
+        if alerts:
+            st.warning("Low stock detected! Please restock the shelf.")
+            st.toast("Low stock detected! Please restock the shelf.")
         st.subheader(TRANSLATIONS[st.session_state.app_lang][st.session_state.user_role + " Dashboard"])
         
         # Pull latest summaries from SQLite
         scans = db_manager.get_all_scans()
         total_scans = len(scans)
         latest_val = scans[0][3] if scans else 0.0
-        alerts = check_low_stock()
         
         # Display key summary cards
         col1, col2, col3 = st.columns(3)
@@ -825,6 +825,15 @@ else:
                     try:
                         annotated_image, counts = detector.detect_image(uploaded_file, conf=conf_val)
                         st.image(annotated_image, use_container_width=True)
+                        if counts:
+                            has_low_stock = False
+                            for cls_id, count in counts.items():
+                                threshold = sku_mapping.get(cls_id, {}).get("low_stock_threshold", 0)
+                                if count < threshold:
+                                    has_low_stock = True
+                                    break
+                            if has_low_stock:
+                                st.toast("Low stock detected! Please restock the shelf.")
                     except Exception as ex:
                         st.error(f"{TRANSLATIONS[st.session_state.app_lang]['Detection failed']}: {ex}")
                         counts = {}
@@ -1032,52 +1041,6 @@ else:
             else:
                 st.info(TRANSLATIONS[st.session_state.app_lang]["No scanning history recorded"])
 
-    # ----------------- Notifications & Alerts -----------------
-    elif app_mode == "Low stock count":
-        st.subheader(TRANSLATIONS[st.session_state.app_lang]["Low stock count"])
-        alerts = check_low_stock()
-        
-        if alerts:
-            st.markdown(f"**{len(alerts)} {TRANSLATIONS[st.session_state.app_lang]['Inventory items below target']}**")
-            for item in alerts:
-                st.write(f"- {item}")
-        else:
-            st.success(TRANSLATIONS[st.session_state.app_lang]["All catalog products stocked"])
-
-        if st.session_state.user_role == "Owner":
-            st.write("---")
-            st.write("### ⚙️ " + TRANSLATIONS[st.session_state.app_lang]["Configure Warning Notification Channels"])
-            CONFIG_FILE = "alert_config.json"
-            if os.path.exists(CONFIG_FILE):
-                with open(CONFIG_FILE, "r") as f:
-                    alert_config = json.load(f)
-            else:
-                alert_config = {
-                    "email_enabled": False,
-                    "email_address": "manager@store.com",
-                    "telegram_enabled": False,
-                    "telegram_chat_id": "@SmartInventoryAlerts"
-                }
-                
-            with st.form("owner_alert_config_form"):
-                email_enabled = st.checkbox(TRANSLATIONS[st.session_state.app_lang]["Enable Automated Email Reports"], value=alert_config["email_enabled"])
-                email_address = st.text_input(TRANSLATIONS[st.session_state.app_lang]["Manager Email Address"], value=alert_config["email_address"])
-                telegram_enabled = st.checkbox(TRANSLATIONS[st.session_state.app_lang]["Enable Instant Telegram Mobile Push Alerts"], value=alert_config["telegram_enabled"])
-                telegram_chat_id = st.text_input(TRANSLATIONS[st.session_state.app_lang]["Telegram Chat ID"], value=alert_config["telegram_chat_id"])
-                save_cfg = st.form_submit_button(TRANSLATIONS[st.session_state.app_lang]["Save Notification Settings"])
-                
-                if save_cfg:
-                    new_cfg = {
-                        "email_enabled": email_enabled,
-                        "email_address": email_address,
-                        "telegram_enabled": telegram_enabled,
-                        "telegram_chat_id": telegram_chat_id
-                    }
-                    with open(CONFIG_FILE, "w") as f:
-                        json.dump(new_cfg, f, indent=2)
-                    db_manager.log_audit("Owner", "Updated notification channel configurations")
-                    st.success(TRANSLATIONS[st.session_state.app_lang]["Successfully saved notification channel"])
-                    st.rerun()
 
 
     # ----------------- Audit Logs -----------------
