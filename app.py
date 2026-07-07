@@ -100,9 +100,15 @@ else:
             section[data-testid="stSidebar"] {
                 background-color: #111111 !important;
             }
-            section[data-testid="stSidebar"] * {
+            section[data-testid="stSidebar"] *,
+            [data-testid="stSidebar"] *,
+            div[data-testid="stRadio"] *,
+            div[role="radiogroup"] *,
+            [data-baseweb="radio"] * {
                 color: #ffffff !important;
+                -webkit-text-fill-color: #ffffff !important;
             }
+
 
             input, select, textarea, [data-baseweb="input"], [data-baseweb="select"] > div, button[role="combobox"] span {
                 background-color: #222222 !important;
