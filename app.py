@@ -833,7 +833,10 @@ else:
                         })
                         
                     st.write(f"**{TRANSLATIONS[st.session_state.app_lang]['Total Valuation']}:** ₹{total_value:.2f}")
-                    if st.button(f"💾 {TRANSLATIONS[st.session_state.app_lang]['Log Scan to SQLite']}"):
+                    
+                    # Auto-log scan to SQLite
+                    current_key = f"{uploaded_file.name}_{total_items}_{total_value}"
+                    if st.session_state.get("last_auto_logged_key") != current_key:
                         db_items = []
                         for x in tally_data:
                             db_items.append({
@@ -844,9 +847,9 @@ else:
                             })
                         db_manager.log_scan(total_items, total_value, db_items)
                         db_manager.log_audit(st.session_state.user_role, f"Logged static image scan containing {total_items} items")
+                        st.session_state.last_auto_logged_key = current_key
                         st.success(TRANSLATIONS[st.session_state.app_lang]["Logged successfully"])
-                        st.session_state.pop("adjusted_counts", None)
-                        st.rerun()
+
 
     # ----------------- Video Detection -----------------
     elif app_mode == "Video Detection":
