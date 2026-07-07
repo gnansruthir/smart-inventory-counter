@@ -372,6 +372,103 @@ TRANSLATIONS = {
     }
 }
 
+if not st.session_state.logged_in and bg_base64:
+    bg_style = f"""
+        .stApp {{
+            background-image: url("data:image/png;base64,{bg_base64}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }}
+        .main {{
+            background-color: transparent !important;
+        }}
+    """
+else:
+    if st.session_state.app_theme == "Dark Mode":
+        bg_style = """
+            .stApp {
+                background-color: #000000 !important;
+            }
+            .main {
+                background-color: #000000 !important;
+                color: #ffffff !important;
+            }
+            [data-testid="stAppViewBlockContainer"] h1, 
+            [data-testid="stAppViewBlockContainer"] h2, 
+            [data-testid="stAppViewBlockContainer"] h3, 
+            [data-testid="stAppViewBlockContainer"] h4, 
+            [data-testid="stAppViewBlockContainer"] h5, 
+            [data-testid="stAppViewBlockContainer"] h6, 
+            [data-testid="stAppViewBlockContainer"] p, 
+            [data-testid="stAppViewBlockContainer"] label, 
+            [data-testid="stAppViewBlockContainer"] span, 
+            [data-testid="stAppViewBlockContainer"] li, 
+            [data-testid="stAppViewBlockContainer"] strong, 
+            [data-testid="stAppViewBlockContainer"] small,
+            [data-testid="stMetricValue"] > div,
+            [data-testid="stMetricLabel"] > div {
+                color: #ffffff !important;
+            }
+            .metric-card {
+                background-color: #111111 !important;
+                border: 1px solid #333333 !important;
+            }
+            section[data-testid="stSidebar"] {
+                background-color: #111111 !important;
+            }
+            section[data-testid="stSidebar"] *,
+            [data-testid="stSidebar"] *,
+            div[data-testid="stRadio"] *,
+            div[role="radiogroup"] *,
+            [data-baseweb="radio"] * {
+                color: #ffffff !important;
+                -webkit-text-fill-color: #ffffff !important;
+            }
+            .main input, .main select, .main textarea, .main [data-baseweb="input"], .main [data-baseweb="select"] > div, .main button[role="combobox"] span {
+                background-color: #222222 !important;
+                color: #ffffff !important;
+                -webkit-text-fill-color: #ffffff !important;
+                border: 1px solid #444444 !important;
+            }
+        """
+    else:
+        bg_style = """
+            .stApp {
+                background-color: #ffffff !important;
+            }
+            .main {
+                background-color: #ffffff !important;
+                color: #000000 !important;
+            }
+            .block-container *,
+            [data-testid="stAppViewBlockContainer"] *,
+            .stMarkdown *,
+            div[data-testid="stMetricValue"] *,
+            div[data-testid="stMetricLabel"] * {
+                color: #000000 !important;
+            }
+            .metric-card {
+                background-color: #ffffff !important;
+                border: 1px solid #cbd5e1 !important;
+            }
+            section[data-testid="stSidebar"] *,
+            [data-testid="stSidebar"] *,
+            div[data-testid="stRadio"] *,
+            div[role="radiogroup"] *,
+            [data-baseweb="radio"] * {
+                color: #ffffff !important;
+                -webkit-text-fill-color: #ffffff !important;
+            }
+            .main input, .main select, .main textarea, .main [data-baseweb="input"], .main [data-baseweb="select"] > div, .main button[role="combobox"] span {
+                background-color: #f1f5f9 !important;
+                color: #000000 !important;
+                -webkit-text-fill-color: #000000 !important;
+                border: 1px solid #cbd5e1 !important;
+            }
+        """
+
 # Custom premium styling
 st.markdown(f"""
     <style>
