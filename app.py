@@ -528,7 +528,8 @@ st.markdown(f"""
             color: #0f172a;
         }}
         .stButton>button,
-        [data-testid="stFormSubmitButton"] button {{
+        [data-testid="stFormSubmitButton"] button,
+        [data-testid="stDownloadButton"] button {{
             background-color: #7c3aed !important;
             background: #7c3aed !important;
             color: #ffffff !important;
@@ -540,7 +541,8 @@ st.markdown(f"""
             transform: none !important;
         }}
         .stButton>button *,
-        [data-testid="stFormSubmitButton"] button * {{
+        [data-testid="stFormSubmitButton"] button *,
+        [data-testid="stDownloadButton"] button * {{
             color: #ffffff !important;
             -webkit-text-fill-color: #ffffff !important;
         }}

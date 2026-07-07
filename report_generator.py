@@ -9,16 +9,39 @@ import io
 import os
 from datetime import datetime
 
-# Attempt to load Windows Arial font for Unicode/Tamil rendering support in PDFs
-try:
-    font_path = os.path.join(os.environ.get("SystemRoot", "C:\\Windows"), "Fonts", "arial.ttf")
-    if os.path.exists(font_path):
-        pdfmetrics.registerFont(TTFont('ArialUnicode', font_path))
-        DEFAULT_FONT = 'ArialUnicode'
+import urllib.request
+
+REGULAR_FONT_FILE = "NotoSansTamil-Regular.ttf"
+BOLD_FONT_FILE = "NotoSansTamil-Bold.ttf"
+
+if not os.path.exists(REGULAR_FONT_FILE):
+    script_regular = os.path.join(os.path.dirname(__file__), "NotoSansTamil-Regular.ttf")
+    if os.path.exists(script_regular):
+        REGULAR_FONT_FILE = script_regular
     else:
-        DEFAULT_FONT = 'Helvetica'
+        try:
+            urllib.request.urlretrieve("https://github.com/google/fonts/raw/main/ofl/notosanstamil/static/NotoSansTamil-Regular.ttf", REGULAR_FONT_FILE)
+        except Exception:
+            pass
+
+if not os.path.exists(BOLD_FONT_FILE):
+    script_bold = os.path.join(os.path.dirname(__file__), "NotoSansTamil-Bold.ttf")
+    if os.path.exists(script_bold):
+        BOLD_FONT_FILE = script_bold
+    else:
+        try:
+            urllib.request.urlretrieve("https://github.com/google/fonts/raw/main/ofl/notosanstamil/static/NotoSansTamil-Bold.ttf", BOLD_FONT_FILE)
+        except Exception:
+            pass
+
+try:
+    pdfmetrics.registerFont(TTFont('NotoSansTamil', REGULAR_FONT_FILE))
+    pdfmetrics.registerFont(TTFont('NotoSansTamil-Bold', BOLD_FONT_FILE))
+    DEFAULT_FONT = 'NotoSansTamil'
+    DEFAULT_BOLD_FONT = 'NotoSansTamil-Bold'
 except Exception:
     DEFAULT_FONT = 'Helvetica'
+    DEFAULT_BOLD_FONT = 'Helvetica-Bold'
 
 def generate_pdf_report(tally_data, total_items, total_value, translations, lang):
     """
@@ -34,7 +57,7 @@ def generate_pdf_report(tally_data, total_items, total_value, translations, lang
     title_style = ParagraphStyle(
         'TitleStyle',
         parent=styles['Heading1'],
-        fontName=f"{DEFAULT_FONT}-Bold" if DEFAULT_FONT == 'Helvetica' else DEFAULT_FONT,
+        fontName=DEFAULT_BOLD_FONT,
         fontSize=22,
         textColor=colors.HexColor('#1e1b4b'),
         spaceAfter=15
@@ -60,7 +83,7 @@ def generate_pdf_report(tally_data, total_items, total_value, translations, lang
     header_cell_style = ParagraphStyle(
         'HeaderCellStyle',
         parent=styles['Normal'],
-        fontName=f"{DEFAULT_FONT}-Bold" if DEFAULT_FONT == 'Helvetica' else DEFAULT_FONT,
+        fontName=DEFAULT_BOLD_FONT,
         fontSize=10,
         textColor=colors.whitesmoke
     )
