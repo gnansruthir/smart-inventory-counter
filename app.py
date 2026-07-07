@@ -873,70 +873,41 @@ else:
     elif app_mode == "📹 Live Detection":
         st.subheader("📹 " + TRANSLATIONS[st.session_state.app_lang]["Real-time Tracking Feed"])
         conf_val = st.slider(TRANSLATIONS[st.session_state.app_lang]["Sensitivity"], 0.05, 0.90, 0.15, step=0.05)
-        input_source = st.selectbox(TRANSLATIONS[st.session_state.app_lang]["Select Tracker Input Stream"], [TRANSLATIONS[st.session_state.app_lang]["Webcam Live Input"], TRANSLATIONS[st.session_state.app_lang]["Upload Video File"]])
-        
-        if input_source == TRANSLATIONS[st.session_state.app_lang]["Webcam Live Input"]:
-            st.write(TRANSLATIONS[st.session_state.app_lang]["Capture shelf snapshots"])
-            webcam_image = st.camera_input(TRANSLATIONS[st.session_state.app_lang]["Take snap"])
-            if webcam_image is not None and detector is not None:
-                annotated_img, counts = detector.detect_image(webcam_image, conf=conf_val)
-                st.image(annotated_img, use_container_width=True)
+        uploaded_video = st.file_uploader(TRANSLATIONS[st.session_state.app_lang]["Upload video file"], type=["mp4", "avi", "mov"])
+        if uploaded_video is not None:
+            temp_file_path = "temp_uploaded_video.mp4"
+            with open(temp_file_path, "wb") as f:
+                f.write(uploaded_video.read())
                 
-                tally_data = []
-                total_value = 0.0
-                total_items = 0
-                for cls_id, count in counts.items():
-                    mapping = sku_mapping.get(cls_id, {"sku_name": f"Unmapped ({cls_id})", "price": 0.0})
-                    total_value += count * mapping["price"]
-                    total_items += count
-                    tally_data.append({
-                        'sku_name': mapping["sku_name"],
-                        'detected_class': cls_id,
-                        'count': count,
-                        'unit_price': mapping["price"]
-                    })
-                if st.button(f"💾 {TRANSLATIONS[st.session_state.app_lang]['Log Webcam Snap to Database']}"):
-                    db_manager.log_scan(total_items, total_value, tally_data)
-                    db_manager.log_audit(st.session_state.user_role, f"Logged webcam snapshot scan containing {total_items} items")
-                    st.success(TRANSLATIONS[st.session_state.app_lang]["Webcam scan saved"])
-                    st.rerun()
-                    
-        else:
-            uploaded_video = st.file_uploader(TRANSLATIONS[st.session_state.app_lang]["Upload video file"], type=["mp4", "avi", "mov"])
-            if uploaded_video is not None:
-                temp_file_path = "temp_uploaded_video.mp4"
-                with open(temp_file_path, "wb") as f:
-                    f.write(uploaded_video.read())
-                    
-                video_cap = cv2.VideoCapture(temp_file_path)
-                st_frame = st.empty()
-                tracked_objects = {}
-                
-                while video_cap.isOpened():
-                    ret, frame = video_cap.read()
-                    if not ret:
-                        break
-                    annotated_frame, active_tracks = detector.track_frame(frame, conf=conf_val)
-                    for track_id, class_name in active_tracks.items():
-                        tracked_objects[track_id] = class_name
-                    st_frame.image(annotated_frame, use_container_width=True)
-                video_cap.release()
-                os.remove(temp_file_path)
-                
-                # Format tracked items
-                class_counts = {}
-                for cls_name in tracked_objects.values():
-                    class_counts[cls_name] = class_counts.get(cls_name, 0) + 1
-                total_items = sum(class_counts.values())
-                total_val = sum(class_counts[cls] * sku_mapping.get(cls, {"price":0.0})["price"] for cls in class_counts)
-                
-                st.write(f"**{TRANSLATIONS[st.session_state.app_lang]['Unique Items Tracked']}:** {total_items} | **{TRANSLATIONS[st.session_state.app_lang]['Valuation']}:** ₹{total_val:.2f}")
-                if st.button(f"💾 {TRANSLATIONS[st.session_state.app_lang]['Log Video Track to SQL']}"):
-                    db_items = [{'sku_name': sku_mapping.get(cls, {"sku_name": cls})["sku_name"], 'detected_class': cls, 'count': val, 'unit_price': sku_mapping.get(cls, {"price":0.0})["price"]} for cls, val in class_counts.items()]
-                    db_manager.log_scan(total_items, total_val, db_items)
-                    db_manager.log_audit(st.session_state.user_role, f"Logged tracking video log containing {total_items} items")
-                    st.success(TRANSLATIONS[st.session_state.app_lang]["Video track logged"])
-                    st.rerun()
+            video_cap = cv2.VideoCapture(temp_file_path)
+            st_frame = st.empty()
+            tracked_objects = {}
+            
+            while video_cap.isOpened():
+                ret, frame = video_cap.read()
+                if not ret:
+                    break
+                annotated_frame, active_tracks = detector.track_frame(frame, conf=conf_val)
+                for track_id, class_name in active_tracks.items():
+                    tracked_objects[track_id] = class_name
+                st_frame.image(annotated_frame, use_container_width=True)
+            video_cap.release()
+            os.remove(temp_file_path)
+            
+            # Format tracked items
+            class_counts = {}
+            for cls_name in tracked_objects.values():
+                class_counts[cls_name] = class_counts.get(cls_name, 0) + 1
+            total_items = sum(class_counts.values())
+            total_val = sum(class_counts[cls] * sku_mapping.get(cls, {"price":0.0})["price"] for cls in class_counts)
+            
+            st.write(f"**{TRANSLATIONS[st.session_state.app_lang]['Unique Items Tracked']}:** {total_items} | **{TRANSLATIONS[st.session_state.app_lang]['Valuation']}:** ₹{total_val:.2f}")
+            if st.button(f"💾 {TRANSLATIONS[st.session_state.app_lang]['Log Video Track to SQL']}"):
+                db_items = [{'sku_name': sku_mapping.get(cls, {"sku_name": cls})["sku_name"], 'detected_class': cls, 'count': val, 'unit_price': sku_mapping.get(cls, {"price":0.0})["price"]} for cls, val in class_counts.items()]
+                db_manager.log_scan(total_items, total_val, db_items)
+                db_manager.log_audit(st.session_state.user_role, f"Logged tracking video log containing {total_items} items")
+                st.success(TRANSLATIONS[st.session_state.app_lang]["Video track logged"])
+                st.rerun()
 
     # ----------------- SKU Management -----------------
     elif app_mode == "⚙️ SKU Management":
