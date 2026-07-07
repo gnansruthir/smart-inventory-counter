@@ -219,7 +219,9 @@ TRANSLATIONS = {
         "Total Value (₹)": "Total Value (₹)",
         "Before/After Comparison": "Before/After Comparison",
         "Sensitivity": "Model Sensitivity (Lower values detect items more easily)",
-        "Low stock alert toast": "Low stock detected! Please restock the shelf."
+        "Low stock alert toast": "Low stock detected! Please restock the shelf.",
+        "Scan Summary Breakdown": "Scan Summary Breakdown",
+        "items": "items"
     },
     "Tamil": {
         "title": "ஸ்மார்ட் சரக்குக் கணக்கீட்டு அமைப்பு",
@@ -368,7 +370,9 @@ TRANSLATIONS = {
         "Total Value (₹)": "மொத்த மதிப்பு (₹)",
         "Before/After Comparison": "முன்பு/பின்பு ஒப்பீடு",
         "Sensitivity": "மாதிரி உணர்திறன் (குறைந்த மதிப்பு பொருட்களை எளிதாகக் கண்டறியும்)",
-        "Low stock alert toast": "குறைந்த இருப்பு கண்டறியப்பட்டது! அலமாரியை நிரப்பவும்."
+        "Low stock alert toast": "குறைந்த இருப்பு கண்டறியப்பட்டது! அலமாரியை நிரப்பவும்.",
+        "Scan Summary Breakdown": "ஸ்கேன் சுருக்கம்",
+        "items": "பொருட்கள்"
     }
 }
 
@@ -877,6 +881,10 @@ else:
             total_val = sum(class_counts[cls] * sku_mapping.get(cls, {"price":0.0})["price"] for cls in class_counts)
             
             st.write(f"**{TRANSLATIONS[st.session_state.app_lang]['Unique Items Tracked']}:** {total_items} | **{TRANSLATIONS[st.session_state.app_lang]['Valuation']}:** ₹{total_val:.2f}")
+            st.write(f"### {TRANSLATIONS[st.session_state.app_lang]['Scan Summary Breakdown']}")
+            for cls, count in class_counts.items():
+                mapped_name = sku_mapping.get(cls, {}).get("sku_name", cls)
+                st.write(f"- **{mapped_name}**: {count} {TRANSLATIONS[st.session_state.app_lang]['items']}")
             if st.button(f"💾 {TRANSLATIONS[st.session_state.app_lang]['Log Video Track to SQL']}"):
                 db_items = [{'sku_name': sku_mapping.get(cls, {"sku_name": cls})["sku_name"], 'detected_class': cls, 'count': val, 'unit_price': sku_mapping.get(cls, {"price":0.0})["price"]} for cls, val in class_counts.items()]
                 db_manager.log_scan(total_items, total_val, db_items)
