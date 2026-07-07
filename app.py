@@ -212,7 +212,7 @@ if not st.session_state.logged_in:
                         st.success(f"Welcome {role}! Loading panel...")
                         st.rerun()
                     else:
-                        st.error("Incorrect username or password, or account has not been created yet.")
+                        st.error("Account not found. Please create an account first.")
 
                         
         with tab_signup:
