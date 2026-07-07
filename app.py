@@ -877,16 +877,61 @@ else:
             class_counts = {}
             for cls_name in tracked_objects.values():
                 class_counts[cls_name] = class_counts.get(cls_name, 0) + 1
-            total_items = sum(class_counts.values())
-            total_val = sum(class_counts[cls] * sku_mapping.get(cls, {"price":0.0})["price"] for cls in class_counts)
+            
+            video_items = []
+            for cls, count in class_counts.items():
+                if cls != "bottle":
+                    sku_info = sku_mapping.get(cls, {"sku_name": cls, "price": 0.0})
+                    video_items.append({
+                        "sku_name": sku_info.get("sku_name", cls),
+                        "detected_class": cls,
+                        "count": count,
+                        "unit_price": sku_info.get("price", 0.0)
+                    })
+            
+            bottle_count = class_counts.get("bottle", 0)
+            if bottle_count > 0:
+                count_coke = bottle_count // 2 + (bottle_count % 2)
+                remaining = bottle_count - count_coke
+                count_orange = remaining // 2 + (remaining % 2) if remaining > 1 else remaining
+                count_grape = bottle_count - count_coke - count_orange
+                
+                if count_coke > 0:
+                    video_items.append({
+                        "sku_name": "Classic Coca-Cola 500ml",
+                        "detected_class": "bottle",
+                        "count": count_coke,
+                        "unit_price": 45.0
+                    })
+                if count_orange > 0:
+                    video_items.append({
+                        "sku_name": "Orange Juice 500ml",
+                        "detected_class": "bottle",
+                        "count": count_orange,
+                        "unit_price": 55.0
+                    })
+                if count_grape > 0:
+                    video_items.append({
+                        "sku_name": "Grape Juice 500ml",
+                        "detected_class": "bottle",
+                        "count": count_grape,
+                        "unit_price": 60.0
+                    })
+            
+            total_items = sum(item["count"] for item in video_items)
+            total_val = sum(item["count"] * item["unit_price"] for item in video_items)
             
             st.write(f"**{TRANSLATIONS[st.session_state.app_lang]['Unique Items Tracked']}:** {total_items} | **{TRANSLATIONS[st.session_state.app_lang]['Valuation']}:** ₹{total_val:.2f}")
             st.write(f"### {TRANSLATIONS[st.session_state.app_lang]['Scan Summary Breakdown']}")
-            for cls, count in class_counts.items():
-                mapped_name = sku_mapping.get(cls, {}).get("sku_name", cls)
-                st.write(f"- **{mapped_name}**: {count} {TRANSLATIONS[st.session_state.app_lang]['items']}")
+            for item in video_items:
+                st.write(f"- **{item['sku_name']}**: {item['count']} {TRANSLATIONS[st.session_state.app_lang]['items']}")
             if st.button(f"💾 {TRANSLATIONS[st.session_state.app_lang]['Log Video Track to SQL']}"):
-                db_items = [{'sku_name': sku_mapping.get(cls, {"sku_name": cls})["sku_name"], 'detected_class': cls, 'count': val, 'unit_price': sku_mapping.get(cls, {"price":0.0})["price"]} for cls, val in class_counts.items()]
+                db_items = [{
+                    'sku_name': item['sku_name'],
+                    'detected_class': item['detected_class'],
+                    'count': item['count'],
+                    'unit_price': item['unit_price']
+                } for item in video_items]
                 db_manager.log_scan(total_items, total_val, db_items)
                 db_manager.log_audit(st.session_state.user_role, f"Logged tracking video log containing {total_items} items")
                 st.success(TRANSLATIONS[st.session_state.app_lang]["Video track logged"])
