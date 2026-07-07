@@ -123,7 +123,7 @@ TRANSLATIONS = {
         "Successfully updated threshold": "Successfully updated threshold for",
         "to": "to",
         "No scanning data logged yet": "No scanning data logged yet. Run a static image scan to populate records.",
-        "Static Image Scanner": "Static Image Scanner",
+        "Static Image Scanner": "Image Scan",
         "Upload shelf photograph": "Upload shelf photograph...",
         "Shelf Detection View": "Shelf Detection View",
         "Analyzing image": "Analyzing image...",
@@ -134,7 +134,7 @@ TRANSLATIONS = {
         "Total Valuation": "Total Valuation",
         "Log Scan to SQLite": "Log Scan to SQLite",
         "Logged successfully": "Logged successfully!",
-        "Real-time Tracking Feed": "Real-time Tracking Feed",
+        "Real-time Tracking Feed": "Video Scan",
         "Select Tracker Input Stream": "Select Tracker Input Stream",
         "Webcam Live Input": "Webcam Live Input",
         "Upload Video File": "Upload Video File",
@@ -215,7 +215,8 @@ TRANSLATIONS = {
         "Total Items": "Total Items",
         "Total Value (₹)": "Total Value (₹)",
         "Before/After Comparison": "Before/After Comparison",
-        "Sensitivity": "Model Sensitivity (Lower values detect items more easily)"
+        "Sensitivity": "Model Sensitivity (Lower values detect items more easily)",
+        "Low stock alert toast": "Low stock detected! Please restock the shelf."
     },
     "Tamil": {
         "title": "ஸ்மார்ட் சரக்குக் கணக்கீட்டு அமைப்பு",
@@ -271,7 +272,7 @@ TRANSLATIONS = {
         "Successfully updated threshold": "வெற்றிகரமாக புதுப்பிக்கப்பட்ட வரம்பு",
         "to": "இதற்கு",
         "No scanning data logged yet": "இன்னும் ஸ்கேன் தரவு எதுவும் பதிவு செய்யப்படவில்லை. பதிவுகளை நிரப்ப ஒரு நிலையான பட ஸ்கேன் இயக்கவும்.",
-        "Static Image Scanner": "நிலையான பட ஸ்கேனர்",
+        "Static Image Scanner": "படம் ஸ்கேன்",
         "Upload shelf photograph": "அலமாரி புகைப்படத்தைப் பதிவேற்றவும்...",
         "Shelf Detection View": "அலமாரி கண்டறிதல் பார்வை",
         "Analyzing image": "படம் பகுப்பாய்வு செய்யப்படுகிறது...",
@@ -282,7 +283,7 @@ TRANSLATIONS = {
         "Total Valuation": "மொத்த மதிப்பீடு",
         "Log Scan to SQLite": "ஸ்கானை SQLite இல் பதிவு செய்க",
         "Logged successfully": "வெற்றிகரமாக பதிவு செய்யப்பட்டது!",
-        "Real-time Tracking Feed": "நிகழ்நேர கண்காணிப்பு ஊட்டம்",
+        "Real-time Tracking Feed": "வீடியோ ஸ்கேன்",
         "Select Tracker Input Stream": "கண்காணிப்பு உள்ளீட்டு ஸ்ட்ரீமைத் தேர்ந்தெடுக்கவும்",
         "Webcam Live Input": "வெப்கேமரா நேரடி உள்ளீடு",
         "Upload Video File": "வீடியோ கோப்பைப் பதிவேற்றவும்",
@@ -363,7 +364,8 @@ TRANSLATIONS = {
         "Total Items": "மொத்த பொருட்கள்",
         "Total Value (₹)": "மொத்த மதிப்பு (₹)",
         "Before/After Comparison": "முன்பு/பின்பு ஒப்பீடு",
-        "Sensitivity": "மாதிரி உணர்திறன் (குறைந்த மதிப்பு பொருட்களை எளிதாகக் கண்டறியும்)"
+        "Sensitivity": "மாதிரி உணர்திறன் (குறைந்த மதிப்பு பொருட்களை எளிதாகக் கண்டறியும்)",
+        "Low stock alert toast": "குறைந்த இருப்பு கண்டறியப்பட்டது! அலமாரியை நிரப்பவும்."
     }
 }
 
@@ -710,7 +712,7 @@ else:
     if "Dashboard" in app_mode:
         alerts = check_low_stock()
         if alerts:
-            st.toast("Low stock detected! Please restock the shelf.")
+            st.toast(TRANSLATIONS[st.session_state.app_lang]["Low stock alert toast"])
         st.subheader(TRANSLATIONS[st.session_state.app_lang][st.session_state.user_role + " Dashboard"])
         
         # Pull latest summaries from SQLite
@@ -750,7 +752,8 @@ else:
             if details:
                 records = []
                 for item in details:
-                    sku_name, class_id, count, price = item
+                    _, class_id, count, price = item
+                    sku_name = sku_mapping.get(class_id, {}).get("sku_name", class_id)
                     threshold = sku_mapping.get(class_id, {}).get("low_stock_threshold", 0)
                     status = TRANSLATIONS[st.session_state.app_lang]["Low Stock"] if count < threshold else TRANSLATIONS[st.session_state.app_lang]["Optimal Stock"]
                     records.append({
@@ -784,7 +787,7 @@ else:
                                     has_low_stock = True
                                     break
                             if has_low_stock:
-                                st.toast("Low stock detected! Please restock the shelf.")
+                                st.toast(TRANSLATIONS[st.session_state.app_lang]["Low stock alert toast"])
                     except Exception as ex:
                         st.error(f"{TRANSLATIONS[st.session_state.app_lang]['Detection failed']}: {ex}")
                         counts = {}
@@ -808,7 +811,7 @@ else:
                     total_items = 0
                     low_stock_triggered = []
                     for cls_id, count in st.session_state.adjusted_counts.items():
-                        mapping = sku_mapping.get(cls_id, {"sku_name": f"Unmapped ({cls_id})", "price": 0.0, "low_stock_threshold": 0})
+                        mapping = sku_mapping.get(cls_id, {"sku_name": cls_id, "price": 0.0, "low_stock_threshold": 0})
                         sku_name = mapping["sku_name"]
                         price = mapping["price"]
                         subtotal = count * price
