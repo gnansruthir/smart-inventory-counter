@@ -87,10 +87,11 @@ else:
                 background-color: #000000 !important;
                 color: #ffffff !important;
             }
-            h1, h2, h3, h4, h5, h6, label, p, span, div, strong, small {
+            .main h1, .main h2, .main h3, .main h4, .main h5, .main h6, 
+            .main label, .main p, .main span, .main strong, .main small, .main li {
                 color: #ffffff !important;
             }
-            div[data-testid="stMetricValue"] > div {
+            .main div[data-testid="stMetricValue"] > div {
                 color: #ffffff !important;
             }
             .metric-card {
@@ -108,25 +109,11 @@ else:
                 color: #ffffff !important;
                 -webkit-text-fill-color: #ffffff !important;
             }
-            input, select, textarea, [data-baseweb="input"], [data-baseweb="select"] > div, button[role="combobox"] span {
+            .main input, .main select, .main textarea, .main [data-baseweb="input"], .main [data-baseweb="select"] > div, .main button[role="combobox"] span {
                 background-color: #222222 !important;
                 color: #ffffff !important;
                 -webkit-text-fill-color: #ffffff !important;
                 border: 1px solid #444444 !important;
-            }
-            button[data-baseweb="tab"] {
-                color: #ffffff !important;
-            }
-            button[data-baseweb="tab"] p {
-                color: #ffffff !important;
-                font-weight: 600 !important;
-            }
-            div[data-testid="stWidgetLabel"] label,
-            div[data-testid="stWidgetLabel"] p,
-            label,
-            span[data-testid="stWidgetLabel"] {
-                color: #ffffff !important;
-                font-weight: 600 !important;
             }
         """
     else:
@@ -138,10 +125,11 @@ else:
                 background-color: #ffffff !important;
                 color: #000000 !important;
             }
-            h1, h2, h3, h4, h5, h6, label, p, span, div, strong, small {
+            .main h1, .main h2, .main h3, .main h4, .main h5, .main h6, 
+            .main label, .main p, .main span, .main strong, .main small, .main li {
                 color: #000000 !important;
             }
-            div[data-testid="stMetricValue"] > div {
+            .main div[data-testid="stMetricValue"] > div {
                 color: #000000 !important;
             }
             .metric-card {
@@ -157,33 +145,11 @@ else:
             section[data-testid="stSidebar"] div {
                 color: #000000 !important;
             }
-            section[data-testid="stSidebar"] *,
-            [data-testid="stSidebar"] *,
-            div[data-testid="stRadio"] *,
-            div[role="radiogroup"] *,
-            [data-baseweb="radio"] * {
-                color: #000000 !important;
-                -webkit-text-fill-color: #000000 !important;
-            }
-            input, select, textarea, [data-baseweb="input"], [data-baseweb="select"] > div, button[role="combobox"] span {
+            .main input, .main select, .main textarea, .main [data-baseweb="input"], .main [data-baseweb="select"] > div, .main button[role="combobox"] span {
                 background-color: #f1f5f9 !important;
                 color: #000000 !important;
                 -webkit-text-fill-color: #000000 !important;
                 border: 1px solid #cbd5e1 !important;
-            }
-            button[data-baseweb="tab"] {
-                color: #000000 !important;
-            }
-            button[data-baseweb="tab"] p {
-                color: #000000 !important;
-                font-weight: 600 !important;
-            }
-            div[data-testid="stWidgetLabel"] label,
-            div[data-testid="stWidgetLabel"] p,
-            label,
-            span[data-testid="stWidgetLabel"] {
-                color: #000000 !important;
-                font-weight: 600 !important;
             }
         """
 
@@ -257,6 +223,31 @@ st.markdown(f"""
             padding: 2rem !important;
         }}
 
+        /* Force black tabs labels */
+        button[data-baseweb="tab"] {{
+            color: #000000 !important;
+        }}
+        button[data-baseweb="tab"] p {{
+            color: #000000 !important;
+            font-weight: 600 !important;
+        }}
+
+        /* Force black text for Username and Password widget labels */
+        div[data-testid="stWidgetLabel"] label,
+        div[data-testid="stWidgetLabel"] p,
+        label,
+        span[data-testid="stWidgetLabel"] {{
+            color: #000000 !important;
+            font-weight: 600 !important;
+        }}
+
+        /* Force light background and black text inside input fields and dropdowns */
+        input, select, textarea, [data-baseweb="input"], [data-baseweb="select"] > div, button[role="combobox"] span {{
+            background-color: #f1f5f9 !important;
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+            border: 1px solid #cbd5e1 !important;
+        }}
 
 
 
