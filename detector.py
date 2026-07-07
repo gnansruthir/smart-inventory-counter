@@ -24,6 +24,57 @@ class InventoryDetector:
             "bowl": "cup"
         }
 
+    def classify_bottle_by_color(self, crop):
+        """
+        Classifies a cropped bottle image by its HSV color space.
+        Returns:
+          * "bottle_sprite" (if green pixels > 8% of total)
+          * "bottle_orange" (if orange pixels > 8% of total)
+          * "bottle_grape" (if red pixels > 8% of total)
+          * "bottle_coke" (default/fallback)
+        """
+        if crop is None or crop.size == 0:
+            return "bottle_coke"
+            
+        hsv = cv2.cvtColor(crop, cv2.COLOR_BGR2HSV)
+        h, w = crop.shape[:2]
+        total_pixels = h * w
+        if total_pixels == 0:
+            return "bottle_coke"
+
+        # Green: H in [36, 85], S in [40, 255], V in [40, 255]
+        lower_green = np.array([36, 40, 40])
+        upper_green = np.array([85, 255, 255])
+        
+        # Orange: H in [10, 25], S in [40, 255], V in [40, 255]
+        lower_orange = np.array([10, 40, 40])
+        upper_orange = np.array([25, 255, 255])
+        
+        # Red: H in [0, 10] or [170, 180], S in [40, 255], V in [40, 255]
+        lower_red1 = np.array([0, 40, 40])
+        upper_red1 = np.array([10, 255, 255])
+        lower_red2 = np.array([170, 40, 40])
+        upper_red2 = np.array([180, 255, 255])
+
+        mask_green = cv2.inRange(hsv, lower_green, upper_green)
+        mask_orange = cv2.inRange(hsv, lower_orange, upper_orange)
+        mask_red1 = cv2.inRange(hsv, lower_red1, upper_red1)
+        mask_red2 = cv2.inRange(hsv, lower_red2, upper_red2)
+        mask_red = cv2.bitwise_or(mask_red1, mask_red2)
+
+        green_pct = (np.sum(mask_green > 0) / total_pixels) * 100
+        orange_pct = (np.sum(mask_orange > 0) / total_pixels) * 100
+        red_pct = (np.sum(mask_red > 0) / total_pixels) * 100
+
+        if green_pct > 8.0:
+            return "bottle_sprite"
+        elif orange_pct > 8.0:
+            return "bottle_orange"
+        elif red_pct > 8.0:
+            return "bottle_grape"
+        else:
+            return "bottle_coke"
+
     def detect_image(self, image_path_or_buf, conf=0.25):
         """
         Runs object detection on an image.
@@ -57,16 +108,26 @@ class InventoryDetector:
                 
                 if raw_name in self.RETAIL_NAME_MAP:
                     mapped_name = self.RETAIL_NAME_MAP[raw_name]
+                    
+                    x1, y1, x2, y2 = map(int, box)
+                    if mapped_name == "bottle":
+                        h, w = image.shape[:2]
+                        x1_c, y1_c = max(0, x1), max(0, y1)
+                        x2_c, y2_c = min(w, x2), min(h, y2)
+                        crop = image[y1_c:y2_c, x1_c:x2_c]
+                        mapped_name = self.classify_bottle_by_color(crop)
+                        
                     class_counts[mapped_name] = class_counts.get(mapped_name, 0) + 1
                     
                     # Draw box and label
-                    x1, y1, x2, y2 = map(int, box)
                     conf_val = confs[idx]
                     label = f"{mapped_name} {conf_val:.2f}"
                     
                     # Blue for bottles, Purple for boxes, Green for cups
                     color = (255, 0, 0) # Blue
-                    if mapped_name == "box":
+                    if "bottle" in mapped_name:
+                        color = (255, 0, 0) # Blue
+                    elif mapped_name == "box":
                         color = (128, 0, 128) # Purple
                     elif mapped_name == "cup":
                         color = (0, 128, 0) # Green
@@ -102,11 +163,19 @@ class InventoryDetector:
                 
                 if raw_name in self.RETAIL_NAME_MAP:
                     mapped_name = self.RETAIL_NAME_MAP[raw_name]
+                    
+                    x1, y1, x2, y2 = map(int, box)
+                    if mapped_name == "bottle":
+                        h, w = frame.shape[:2]
+                        x1_c, y1_c = max(0, x1), max(0, y1)
+                        x2_c, y2_c = min(w, x2), min(h, y2)
+                        crop = frame[y1_c:y2_c, x1_c:x2_c]
+                        mapped_name = self.classify_bottle_by_color(crop)
+                        
                     obj_id = str(ids[idx]) if ids is not None else f"det_{idx}"
                     active_tracks[obj_id] = mapped_name
                     
                     # Draw box and label
-                    x1, y1, x2, y2 = map(int, box)
                     conf_val = confs[idx]
                     label = f"{mapped_name} {conf_val:.2f}"
                     if ids is not None:
@@ -114,7 +183,9 @@ class InventoryDetector:
                         
                     # Blue for bottles, Purple for boxes, Green for cups
                     color = (255, 0, 0) # Blue
-                    if mapped_name == "box":
+                    if "bottle" in mapped_name:
+                        color = (255, 0, 0) # Blue
+                    elif mapped_name == "box":
                         color = (128, 0, 128) # Purple
                     elif mapped_name == "cup":
                         color = (0, 128, 0) # Green

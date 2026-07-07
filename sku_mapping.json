@@ -13,5 +13,25 @@
     "sku_name": "Sprite Can 330ml",
     "price": 35.0,
     "low_stock_threshold": 15
+  },
+  "bottle_coke": {
+    "sku_name": "Classic Coca-Cola 500ml",
+    "price": 45.0,
+    "low_stock_threshold": 10
+  },
+  "bottle_orange": {
+    "sku_name": "Orange Juice 500ml",
+    "price": 55.0,
+    "low_stock_threshold": 8
+  },
+  "bottle_sprite": {
+    "sku_name": "Sprite Soda 500ml",
+    "price": 35.0,
+    "low_stock_threshold": 12
+  },
+  "bottle_grape": {
+    "sku_name": "Grape Juice 500ml",
+    "price": 60.0,
+    "low_stock_threshold": 5
   }
 }

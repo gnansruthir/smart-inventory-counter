@@ -37,6 +37,22 @@ def save_sku_mapping(mapping):
 
 sku_mapping = load_sku_mapping()
 
+# Add default SKU settings if they are missing
+defaults = {
+    "bottle_coke": {"sku_name": "Classic Coca-Cola 500ml", "price": 45.0, "low_stock_threshold": 10},
+    "bottle_orange": {"sku_name": "Orange Juice 500ml", "price": 55.0, "low_stock_threshold": 8},
+    "bottle_sprite": {"sku_name": "Sprite Soda 500ml", "price": 35.0, "low_stock_threshold": 12},
+    "bottle_grape": {"sku_name": "Grape Juice 500ml", "price": 60.0, "low_stock_threshold": 5}
+}
+updated = False
+for key, val in defaults.items():
+    if key not in sku_mapping:
+        sku_mapping[key] = val
+        updated = True
+
+if updated:
+    save_sku_mapping(sku_mapping)
+
 @st.cache_resource
 def get_detector():
     import importlib
