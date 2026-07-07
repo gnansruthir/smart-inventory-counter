@@ -81,23 +81,42 @@ else:
     if st.session_state.app_theme == "Dark Mode":
         bg_style = """
             .stApp {
-                background-color: #0b0f19 !important;
+                background-color: #000000 !important;
             }
             .main {
-                background-color: #0b0f19 !important;
-                color: #f1f5f9 !important;
+                background-color: #000000 !important;
+                color: #ffffff !important;
             }
-            h1, h2, h3, h4, h5, h6, label, p, span, div, strong {
-                color: #f1f5f9 !important;
+            h1, h2, h3, h4, h5, h6, label, p, span, div, strong, small {
+                color: #ffffff !important;
             }
             div[data-testid="stMetricValue"] > div {
-                color: #f1f5f9 !important;
+                color: #ffffff !important;
             }
             .metric-card {
-                background-color: #1e293b !important;
-                border: 1px solid #334155 !important;
+                background-color: #111111 !important;
+                border: 1px solid #333333 !important;
+            }
+            section[data-testid="stSidebar"] {
+                background-color: #111111 !important;
+            }
+            section[data-testid="stSidebar"] h1,
+            section[data-testid="stSidebar"] h2,
+            section[data-testid="stSidebar"] h3,
+            section[data-testid="stSidebar"] label,
+            section[data-testid="stSidebar"] p,
+            section[data-testid="stSidebar"] span,
+            section[data-testid="stSidebar"] div {
+                color: #ffffff !important;
+            }
+            input, select, textarea, [data-baseweb="input"], [data-baseweb="select"] > div, button[role="combobox"] span {
+                background-color: #222222 !important;
+                color: #ffffff !important;
+                -webkit-text-fill-color: #ffffff !important;
+                border: 1px solid #444444 !important;
             }
         """
+
     else:
         bg_style = """
             .stApp {
