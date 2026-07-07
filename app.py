@@ -225,7 +225,15 @@ TRANSLATIONS = {
         "items": "items",
         "Scan History Logs": "Scan History Logs",
         "Current SKU Catalog": "Current Items",
-        "Deleted SKUs History": "Deleted SKU History"
+        "Deleted SKUs History": "Deleted SKU History",
+        "Export Reports Title": "Export Latest Scan Report",
+        "Export PDF": "Export PDF",
+        "Export CSV": "Export CSV",
+        "Item List": "Item List",
+        "Items Counted": "Items Counted",
+        "Total Value": "Total Value",
+        "Item": "Item",
+        "Min Item": "Min Item"
     },
     "Tamil": {
         "title": "ஸ்மார்ட் சரக்குக் கணக்கீட்டு அமைப்பு",
@@ -380,7 +388,15 @@ TRANSLATIONS = {
         "items": "பொருட்கள்",
         "Scan History Logs": "ஸ்கேன் வரலாறு பதிவுகள்",
         "Current SKU Catalog": "தற்போதைய பொருட்கள்",
-        "Deleted SKUs History": "நீக்கப்பட்ட SKU வரலாறு"
+        "Deleted SKUs History": "நீக்கப்பட்ட SKU வரலாறு",
+        "Export Reports Title": "சமீபத்திய ஸ்கேன் அறிக்கையை ஏற்றுமதி செய்க",
+        "Export PDF": "PDF ஆக ஏற்றுமதி செய்க",
+        "Export CSV": "CSV ஆக ஏற்றுமதி செய்க",
+        "Item List": "பொருட்கள் பட்டியல்",
+        "Items Counted": "கணக்கிடப்பட்ட பொருட்கள்",
+        "Total Value": "மொத்த மதிப்பு",
+        "Item": "பொருள்",
+        "Min Item": "குறைந்தபட்ச பொருட்கள்"
     }
 }
 
@@ -964,6 +980,60 @@ else:
                 })
             catalog_df = pd.DataFrame(catalog_data)
             st.dataframe(catalog_df, use_container_width=True)
+
+            # Export Latest Scan Report section
+            st.write("### " + TRANSLATIONS[st.session_state.app_lang]["Export Reports Title"])
+            scans = db_manager.get_all_scans()
+            if scans:
+                latest_id = scans[0][0]
+                latest_total_items = scans[0][2]
+                latest_total_value = scans[0][3]
+                details = db_manager.get_scan_details(latest_id)
+                
+                tally_data = []
+                for item in details:
+                    sku_name, class_id, count, price = item
+                    threshold = sku_mapping.get(class_id, {}).get("low_stock_threshold", 0)
+                    status = TRANSLATIONS[st.session_state.app_lang]["Low Stock"] if count < threshold else TRANSLATIONS[st.session_state.app_lang]["Optimal Stock"]
+                    tally_data.append({
+                        "sku_name": sku_name,
+                        "class_id": class_id,
+                        "count": count,
+                        "price": price,
+                        "min_item": threshold,
+                        "status": status
+                    })
+                
+                pdf_buffer = generate_pdf_report(
+                    tally_data=tally_data,
+                    total_items=latest_total_items,
+                    total_value=latest_total_value,
+                    translations=TRANSLATIONS,
+                    lang=st.session_state.app_lang
+                )
+                csv_data = generate_csv_report(
+                    tally_data=tally_data,
+                    translations=TRANSLATIONS,
+                    lang=st.session_state.app_lang
+                )
+                
+                col_btn1, col_btn2 = st.columns(2)
+                with col_btn1:
+                    st.download_button(
+                        label=TRANSLATIONS[st.session_state.app_lang]["Export PDF"],
+                        data=pdf_buffer,
+                        file_name="latest_scan_report.pdf",
+                        mime="application/pdf"
+                    )
+                with col_btn2:
+                    st.download_button(
+                        label=TRANSLATIONS[st.session_state.app_lang]["Export CSV"],
+                        data=csv_data,
+                        file_name="latest_scan_report.csv",
+                        mime="text/csv"
+                    )
+            else:
+                st.info(TRANSLATIONS[st.session_state.app_lang]["No scanning history recorded"])
 
             with st.form("add_sku_form"):
                 st.write("### " + TRANSLATIONS[st.session_state.app_lang]["Add / Update SKU Mapping"])
