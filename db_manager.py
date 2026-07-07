@@ -56,9 +56,6 @@ class DBManager:
                     role TEXT NOT NULL
                 )
             """)
-            # Seed default users
-            cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'admin123', 'Owner')")
-            cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES ('staff', 'staff123', 'Staff')")
             conn.commit()
 
 

@@ -203,22 +203,17 @@ if not st.session_state.logged_in:
                 submit_signin = st.form_submit_button("Sign In")
                 
                 if submit_signin:
-                    if username == "admin" and password == "admin123":
+                    role = db_manager.authenticate_user(username, password)
+                    if role:
                         st.session_state.logged_in = True
-                        st.session_state.user_role = "Owner"
+                        st.session_state.user_role = role
                         st.session_state.current_page = "Dashboard"
-                        db_manager.log_audit("Owner", "User admin logged in successfully")
-                        st.success("Welcome Owner! Loading panel...")
-                        st.rerun()
-                    elif username == "staff" and password == "staff123":
-                        st.session_state.logged_in = True
-                        st.session_state.user_role = "Staff"
-                        st.session_state.current_page = "Dashboard"
-                        db_manager.log_audit("Staff", "User staff logged in successfully")
-                        st.success("Welcome Staff! Loading panel...")
+                        db_manager.log_audit(role, f"User {username} logged in successfully")
+                        st.success(f"Welcome {role}! Loading panel...")
                         st.rerun()
                     else:
-                        st.error("Incorrect username or password credentials.")
+                        st.error("Incorrect username or password, or account has not been created yet.")
+
                         
         with tab_signup:
             with st.form("signup_form"):
