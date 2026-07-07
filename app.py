@@ -778,12 +778,25 @@ else:
             
             st.write("---")
             st.write(f"### {TRANSLATIONS[st.session_state.app_lang]['Scan History Logs']}")
-            df_scans = pd.DataFrame(scans, columns=[
-                TRANSLATIONS[st.session_state.app_lang]["Scan ID"], 
-                TRANSLATIONS[st.session_state.app_lang]["Timestamp"], 
-                TRANSLATIONS[st.session_state.app_lang]["Total Items"], 
-                TRANSLATIONS[st.session_state.app_lang]["Total Value (₹)"]
-            ])
+            records = []
+            for scan in scans:
+                scan_id, timestamp, total_items, total_value = scan
+                details = db_manager.get_scan_details(scan_id)
+                product_list = []
+                if details:
+                    for item in details:
+                        _, class_id, count, _ = item
+                        mapped_name = sku_mapping.get(class_id, {}).get("sku_name", class_id)
+                        product_list.append(f"{mapped_name} ({count})")
+                product_str = ", ".join(product_list)
+                records.append({
+                    TRANSLATIONS[st.session_state.app_lang]["Scan ID"]: scan_id,
+                    TRANSLATIONS[st.session_state.app_lang]["Timestamp"]: timestamp,
+                    TRANSLATIONS[st.session_state.app_lang]["Product Name"]: product_str,
+                    TRANSLATIONS[st.session_state.app_lang]["Total Items"]: total_items,
+                    TRANSLATIONS[st.session_state.app_lang]["Total Value (₹)"]: total_value
+                })
+            df_scans = pd.DataFrame(records)
             st.dataframe(df_scans, hide_index=True, use_container_width=True)
 
     # ----------------- Image Detection -----------------
