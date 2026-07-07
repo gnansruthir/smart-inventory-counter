@@ -26,7 +26,7 @@ class InventoryDetector:
 
         if image is None:
             raise ValueError("Could not read image source")
-        results = self.model(image, conf=conf)
+        results = self.model(image, conf=conf, classes=list(range(1, 80)))
         result = results[0]  
         annotated_image = result.plot()  
         class_counts = {}
@@ -40,7 +40,7 @@ class InventoryDetector:
 
     def track_frame(self, frame, conf=0.25):
         
-        results = self.model.track(frame, persist=True, tracker="bytetrack.yaml", verbose=False, conf=conf)
+        results = self.model.track(frame, persist=True, tracker="bytetrack.yaml", verbose=False, conf=conf, classes=list(range(1, 80)))
         result = results[0]
 
         annotated_frame = result.plot()
