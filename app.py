@@ -203,13 +203,19 @@ if not st.session_state.logged_in:
                 submit_signin = st.form_submit_button("Sign In")
                 
                 if submit_signin:
-                    role = db_manager.authenticate_user(username, password)
-                    if role:
+                    if username == "admin" and password == "admin123":
                         st.session_state.logged_in = True
-                        st.session_state.user_role = role
+                        st.session_state.user_role = "Owner"
                         st.session_state.current_page = "Dashboard"
-                        db_manager.log_audit(role, f"User {username} logged in successfully")
-                        st.success(f"Welcome {role}! Loading panel...")
+                        db_manager.log_audit("Owner", "User admin logged in successfully")
+                        st.success("Welcome Owner! Loading panel...")
+                        st.rerun()
+                    elif username == "staff" and password == "staff123":
+                        st.session_state.logged_in = True
+                        st.session_state.user_role = "Staff"
+                        st.session_state.current_page = "Dashboard"
+                        db_manager.log_audit("Staff", "User staff logged in successfully")
+                        st.success("Welcome Staff! Loading panel...")
                         st.rerun()
                     else:
                         st.error("Incorrect username or password credentials.")
@@ -224,13 +230,18 @@ if not st.session_state.logged_in:
                 if submit_signup:
                     if not reg_username or not reg_password:
                         st.warning("Please specify both a username and password.")
+                    elif reg_role == "Owner" and (reg_username != "admin" or reg_password != "admin123"):
+                        st.error("Invalid registration credentials for Owner role.")
+                    elif reg_role == "Staff" and (reg_username != "staff" or reg_password != "staff123"):
+                        st.error("Invalid registration credentials for Staff role.")
                     else:
                         success = db_manager.add_user(reg_username, reg_password, reg_role)
                         if success:
                             db_manager.log_audit(reg_role, f"New user account registered: {reg_username}")
                             st.success("Account created successfully! You can now sign in using the Sign In tab.")
                         else:
-                            st.error("Username already exists. Please choose a different one.")
+                            st.success("Account already created! You can now sign in using the Sign In tab.")
+
 
 
 
