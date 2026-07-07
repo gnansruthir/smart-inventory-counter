@@ -123,13 +123,19 @@ def generate_pdf_report(tally_data, total_items, total_value, translations, lang
     
     # Items table data
     for item in tally_data:
+        raw_status = item.get("status", "N/A")
+        if raw_status in [translations["Tamil"]["Low Stock"], translations["English"]["Low Stock"]]:
+            pdf_status = translations["English"]["Low Stock"]
+        else:
+            pdf_status = translations["English"]["Optimal Stock"]
+            
         table_content.append([
             Paragraph(str(item.get("sku_name", "N/A")), cell_style),
             Paragraph(str(item.get("class_id", "N/A")), cell_style),
             Paragraph(str(item.get("count", 0)), cell_style),
             Paragraph(f"Rs. {item.get('price', 0.0):.2f}", cell_style),
             Paragraph(str(item.get("min_item", 0)), cell_style),
-            Paragraph(str(item.get("status", "N/A")), cell_style)
+            Paragraph(pdf_status, cell_style)
         ])
 
     items_table = Table(table_content, colWidths=[130, 80, 70, 80, 80, 80])
