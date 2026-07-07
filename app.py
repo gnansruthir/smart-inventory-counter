@@ -134,26 +134,18 @@ else:
                 background-color: #ffffff !important;
                 color: #000000 !important;
             }
-            [data-testid="stAppViewBlockContainer"] h1, 
-            [data-testid="stAppViewBlockContainer"] h2, 
-            [data-testid="stAppViewBlockContainer"] h3, 
-            [data-testid="stAppViewBlockContainer"] h4, 
-            [data-testid="stAppViewBlockContainer"] h5, 
-            [data-testid="stAppViewBlockContainer"] h6, 
-            [data-testid="stAppViewBlockContainer"] p, 
-            [data-testid="stAppViewBlockContainer"] label, 
-            [data-testid="stAppViewBlockContainer"] span, 
-            [data-testid="stAppViewBlockContainer"] li, 
-            [data-testid="stAppViewBlockContainer"] strong, 
-            [data-testid="stAppViewBlockContainer"] small,
-            [data-testid="stMetricValue"] > div,
-            [data-testid="stMetricLabel"] > div {
+            .block-container *,
+            [data-testid="stAppViewBlockContainer"] *,
+            .stMarkdown *,
+            div[data-testid="stMetricValue"] *,
+            div[data-testid="stMetricLabel"] * {
                 color: #000000 !important;
             }
             .metric-card {
                 background-color: #ffffff !important;
                 border: 1px solid #cbd5e1 !important;
             }
+
             section[data-testid="stSidebar"] * {
                 color: #000000 !important;
             }
