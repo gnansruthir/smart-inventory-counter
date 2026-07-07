@@ -154,7 +154,7 @@ TRANSLATIONS = {
         "Catalog Configuration Settings": "Item List",
         "Authorized Owner role required": "Authorized Owner role is required to modify SKU mappings.",
         "Add / Update SKU Mapping": "Add / Update Item",
-        "YOLO Class ID": "YOLO Class ID (e.g. 'bottle', 'cup')",
+        "YOLO Class ID": "Item",
         "Product Name Input": "Product Name (e.g. 'Pepsi 500ml')",
         "Retail Unit Price (₹)": "Retail Unit Price (₹)",
         "Low Stock Threshold Alert": "Low Stock Threshold Alert",
@@ -224,7 +224,7 @@ TRANSLATIONS = {
         "Scan Summary Breakdown": "Summary",
         "items": "items",
         "Scan History Logs": "Scan History Logs",
-        "Current SKU Catalog": "Current SKU Catalog",
+        "Current SKU Catalog": "Current Items",
         "Deleted SKUs History": "Deleted SKU History"
     },
     "Tamil": {
@@ -309,7 +309,7 @@ TRANSLATIONS = {
         "Catalog Configuration Settings": "பொருட்கள் பட்டியல்",
         "Authorized Owner role required": "SKU மேப்பிங்கை மாற்ற அங்கீகரிக்கப்பட்ட உரிமையாளர் பங்கு தேவை.",
         "Add / Update SKU Mapping": "பொருளைச் சேர் / புதுப்பி",
-        "YOLO Class ID": "YOLO வகுப்பு ஐடி (எ.கா. 'bottle', 'cup')",
+        "YOLO Class ID": "பொருள்",
         "Product Name Input": "தயாரிப்பு பெயர் (எ.கா. 'Pepsi 500ml')",
         "Retail Unit Price (₹)": "சில்லறை அலகு விலை (₹)",
         "Low Stock Threshold Alert": "குறைந்த பங்கு வரம்பு எச்சரிக்கை",
@@ -379,7 +379,7 @@ TRANSLATIONS = {
         "Scan Summary Breakdown": "சுருக்கம்",
         "items": "பொருட்கள்",
         "Scan History Logs": "ஸ்கேன் வரலாறு பதிவுகள்",
-        "Current SKU Catalog": "தற்போதைய SKU பட்டியல்",
+        "Current SKU Catalog": "தற்போதைய பொருட்கள்",
         "Deleted SKUs History": "நீக்கப்பட்ட SKU வரலாறு"
     }
 }
@@ -957,10 +957,10 @@ else:
             catalog_data = []
             for class_id, details in sku_mapping.items():
                 catalog_data.append({
-                    "YOLO Class ID": class_id,
-                    "Product Name": details.get("sku_name", ""),
-                    "Retail Price (₹)": details.get("price", 0.0),
-                    "Warning Threshold": details.get("low_stock_threshold", 0)
+                    TRANSLATIONS[st.session_state.app_lang]["YOLO Class ID"]: class_id,
+                    TRANSLATIONS[st.session_state.app_lang]["Product Name"]: details.get("sku_name", ""),
+                    TRANSLATIONS[st.session_state.app_lang]["Retail Unit Price (₹)"]: details.get("price", 0.0),
+                    TRANSLATIONS[st.session_state.app_lang]["Low Stock Threshold Alert"]: details.get("low_stock_threshold", 0)
                 })
             catalog_df = pd.DataFrame(catalog_data)
             st.dataframe(catalog_df, use_container_width=True)
