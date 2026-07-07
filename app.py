@@ -596,6 +596,8 @@ if not st.session_state.logged_in:
                 submit_signin = st.form_submit_button(TRANSLATIONS[st.session_state.app_lang]["Sign In"])
                 
                 if submit_signin:
+                    username = username.strip()
+                    password = password.strip()
                     role = db_manager.authenticate_user(username, password)
                     if role:
                         st.session_state.logged_in = True
@@ -618,8 +620,11 @@ if not st.session_state.logged_in:
                 submit_signup = st.form_submit_button(TRANSLATIONS[st.session_state.app_lang]["Create Account"])
                 
                 if submit_signup:
+                    reg_username = reg_username.strip()
+                    reg_password = reg_password.strip()
                     # Database needs raw English role string ("Owner" or "Staff")
                     raw_reg_role = "Owner" if reg_role == TRANSLATIONS[st.session_state.app_lang]["Owner"] else "Staff"
+
                     if not reg_username or not reg_password:
                         st.warning(TRANSLATIONS[st.session_state.app_lang]["Specify username password"])
                     elif raw_reg_role == "Owner" and (reg_username != "admin" or reg_password != "admin123"):
