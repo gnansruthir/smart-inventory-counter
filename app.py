@@ -222,7 +222,8 @@ TRANSLATIONS = {
         "Sensitivity": "Model Sensitivity (Lower values detect items more easily)",
         "Low stock alert toast": "Low stock detected! Please restock the shelf.",
         "Scan Summary Breakdown": "Summary",
-        "items": "items"
+        "items": "items",
+        "Scan History Logs": "Scan History Logs"
     },
     "Tamil": {
         "title": "ஸ்மார்ட் சரக்குக் கணக்கீட்டு அமைப்பு",
@@ -374,7 +375,8 @@ TRANSLATIONS = {
         "Sensitivity": "மாதிரி உணர்திறன் (குறைந்த மதிப்பு பொருட்களை எளிதாகக் கண்டறியும்)",
         "Low stock alert toast": "குறைந்த இருப்பு கண்டறியப்பட்டது! அலமாரியை நிரப்பவும்.",
         "Scan Summary Breakdown": "சுருக்கம்",
-        "items": "பொருட்கள்"
+        "items": "பொருட்கள்",
+        "Scan History Logs": "ஸ்கேன் வரலாறு பதிவுகள்"
     }
 }
 
@@ -773,6 +775,16 @@ else:
                         TRANSLATIONS[st.session_state.app_lang]["Status"]: status
                     })
                 st.dataframe(pd.DataFrame(records), hide_index=True, use_container_width=True)
+            
+            st.write("---")
+            st.write(f"### {TRANSLATIONS[st.session_state.app_lang]['Scan History Logs']}")
+            df_scans = pd.DataFrame(scans, columns=[
+                TRANSLATIONS[st.session_state.app_lang]["Scan ID"], 
+                TRANSLATIONS[st.session_state.app_lang]["Timestamp"], 
+                TRANSLATIONS[st.session_state.app_lang]["Total Items"], 
+                TRANSLATIONS[st.session_state.app_lang]["Total Value (₹)"]
+            ])
+            st.dataframe(df_scans, hide_index=True, use_container_width=True)
 
     # ----------------- Image Detection -----------------
     elif app_mode == "Image Detection":
