@@ -5,6 +5,7 @@ import json
 import cv2
 import numpy as np
 import plotly.express as px
+import base64
 from datetime import datetime
 from db_manager import DBManager
 from detector import InventoryDetector
@@ -43,68 +44,14 @@ except Exception as e:
     st.error(f"Failed to load YOLOv8 model: {e}")
     detector = None
 
-# Custom premium styling
-st.markdown("""
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
-        html, body, [class*="css"] {
-            font-family: 'Inter', sans-serif;
-        }
-        .main {
-            background-color: #ffffff;
-            color: #0f172a;
-        }
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'Outfit', sans-serif;
-            font-weight: 700;
-            color: #0f172a;
-        }
-        .stButton>button {
-            background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
-            color: white;
-            border-radius: 10px;
-            border: none;
-            padding: 10px 20px;
-            font-weight: 600;
-            box-shadow: 0 4px 14px 0 rgba(124, 58, 237, 0.4);
-            transition: all 0.3s ease;
-        }
-        .stButton>button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px 0 rgba(124, 58, 237, 0.6);
-        }
-        .header-container {
-            background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
-            padding: 2.5rem;
-            border-radius: 16px;
-            margin-bottom: 2rem;
-            border: none;
-        }
-        .header-container h1, .header-container p {
-            color: #ffffff !important;
-        }
-        .metric-card {
-            background: #ffffff;
-            padding: 1.5rem;
-            border-radius: 14px;
-            border: 1px solid #e2e8f0;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        }
-        
-        /* Narrow container for login form */
-        .login-form-container div[data-testid="stForm"] {
-            background-color: #ffffff !important;
-            border: 1px solid #e2e8f0 !important;
-            border-radius: 16px !important;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08) !important;
-            max-width: 350px !important;
-            margin: 0 auto !important;
-            padding: 2rem !important;
-        }
-    </style>
-""", unsafe_allow_html=True)
+def get_base64_image(image_path):
+    if os.path.exists(image_path):
+        with open(image_path, "rb") as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+    return ""
 
+bg_base64 = get_base64_image("landing_bg.png")
 
 # Session States Configuration
 if "logged_in" not in st.session_state:
@@ -113,6 +60,99 @@ if "user_role" not in st.session_state:
     st.session_state.user_role = None
 if "current_page" not in st.session_state:
     st.session_state.current_page = "Landing"
+
+if not st.session_state.logged_in and bg_base64:
+    bg_style = f"""
+        .stApp {{
+            background-image: url("data:image/png;base64,{bg_base64}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }}
+        .main {{
+            background-color: transparent !important;
+        }}
+    """
+else:
+    bg_style = """
+        .stApp {
+            background-color: #ffffff;
+        }
+        .main {
+            background-color: #ffffff;
+            color: #0f172a;
+        }
+    """
+
+# Custom premium styling
+st.markdown(f"""
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
+        html, body, [class*="css"] {{
+            font-family: 'Inter', sans-serif;
+        }}
+        {bg_style}
+        h1, h2, h3, h4, h5, h6 {{
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            color: #0f172a;
+        }}
+        .stButton>button {{
+            background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+            color: white;
+            border-radius: 10px;
+            border: none;
+            padding: 10px 20px;
+            font-weight: 600;
+            box-shadow: 0 4px 14px 0 rgba(124, 58, 237, 0.4);
+            transition: all 0.3s ease;
+        }}
+        .stButton>button:hover {{
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px 0 rgba(124, 58, 237, 0.6);
+        }}
+        .header-container {{
+            background: rgba(124, 58, 237, 0.95);
+            padding: 1.5rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: none;
+            backdrop-filter: blur(4px);
+        }}
+        .header-container h1 {{
+            color: #ffffff !important;
+            font-size: 2.5rem !important;
+            margin: 0 !important;
+        }}
+        .metric-card {{
+            background: #ffffff;
+            padding: 1.5rem;
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }}
+        
+        @keyframes floatAnimation {{
+            0% {{ transform: translateY(0px); }}
+            50% {{ transform: translateY(-8px); }}
+            100% {{ transform: translateY(0px); }}
+        }}
+        
+        /* Floating layout for login box */
+        div[data-testid="stForm"] {{
+            animation: floatAnimation 4s ease-in-out infinite;
+            background-color: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(124, 58, 237, 0.3) !important;
+            border-radius: 16px !important;
+            box-shadow: 0 15px 35px rgba(124, 58, 237, 0.15) !important;
+            padding: 2rem !important;
+        }}
+    </style>
+""", unsafe_allow_html=True)
+
 
 if not st.session_state.logged_in:
     st.markdown("""
