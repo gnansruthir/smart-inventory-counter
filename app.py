@@ -435,6 +435,13 @@ else:
                 -webkit-text-fill-color: #ffffff !important;
                 border: 1px solid #444444 !important;
             }
+            [data-testid="stFileUploaderDropzone"] {
+                background-color: #1e293b !important;
+                border: 2px dashed #475569 !important;
+            }
+            [data-testid="stFileUploaderDropzone"] * {
+                color: #ffffff !important;
+            }
         """
     else:
         bg_style = """
@@ -469,6 +476,13 @@ else:
                 color: #000000 !important;
                 -webkit-text-fill-color: #000000 !important;
                 border: 1px solid #cbd5e1 !important;
+            }
+            [data-testid="stFileUploaderDropzone"] {
+                background-color: #f8fafc !important;
+                border: 2px dashed #cbd5e1 !important;
+            }
+            [data-testid="stFileUploaderDropzone"] * {
+                color: #0f172a !important;
             }
         """
 
@@ -673,15 +687,15 @@ else:
     menu_map = {
         "Owner Dashboard": "Owner Dashboard",
         "Staff Dashboard": "Staff Dashboard",
-        "Live Detection": "📹 Live Detection",
-        "Static Image Upload": "📷 Static Image Upload",
-        "SKU Management": "⚙️ SKU Management",
-        "Inventory List": "📋 Inventory List",
-        "Reports & Analytics": "📈 Reports & Analytics",
-        "Notifications/Alerts Settings": "🔔 Notifications & Alerts",
-        "Notifications/Alerts": "🔔 Notifications & Alerts",
-        "Audit Logs": "📜 Audit Logs",
-        "Settings": "🔧 Settings"
+        "Live Detection": "Live Detection",
+        "Static Image Upload": "Static Image Upload",
+        "SKU Management": "SKU Management",
+        "Inventory List": "Inventory List",
+        "Reports & Analytics": "Reports & Analytics",
+        "Notifications/Alerts Settings": "Notifications & Alerts",
+        "Notifications/Alerts": "Notifications & Alerts",
+        "Audit Logs": "Audit Logs",
+        "Settings": "Settings"
     }
 
     app_mode_raw = st.sidebar.radio(
@@ -759,8 +773,8 @@ else:
         # Quick Actions section removed entirely
 
     # ----------------- Inventory List -----------------
-    elif app_mode == "📋 Inventory List":
-        st.subheader("📋 " + TRANSLATIONS[st.session_state.app_lang]["Central Inventory List"])
+    elif app_mode == "Inventory List":
+        st.subheader(TRANSLATIONS[st.session_state.app_lang]["Central Inventory List"])
         scans = db_manager.get_all_scans()
         if scans:
             latest_id = scans[0][0]
@@ -803,9 +817,9 @@ else:
 
 
     # ----------------- Static Image Upload -----------------
-    elif app_mode == "📷 Static Image Upload":
-        st.subheader("📷 " + TRANSLATIONS[st.session_state.app_lang]["Static Image Scanner"])
-        conf_val = st.slider(TRANSLATIONS[st.session_state.app_lang]["Sensitivity"], 0.05, 0.90, 0.15, step=0.05)
+    elif app_mode == "Static Image Upload":
+        st.subheader(TRANSLATIONS[st.session_state.app_lang]["Static Image Scanner"])
+        conf_val = 0.15
         uploaded_file = st.file_uploader(TRANSLATIONS[st.session_state.app_lang]["Upload shelf photograph"], type=["jpg", "jpeg", "png"])
         
         if uploaded_file is not None and detector is not None:
@@ -870,9 +884,9 @@ else:
                         st.rerun()
 
     # ----------------- Live Detection -----------------
-    elif app_mode == "📹 Live Detection":
-        st.subheader("📹 " + TRANSLATIONS[st.session_state.app_lang]["Real-time Tracking Feed"])
-        conf_val = st.slider(TRANSLATIONS[st.session_state.app_lang]["Sensitivity"], 0.05, 0.90, 0.15, step=0.05)
+    elif app_mode == "Live Detection":
+        st.subheader(TRANSLATIONS[st.session_state.app_lang]["Real-time Tracking Feed"])
+        conf_val = 0.15
         uploaded_video = st.file_uploader(TRANSLATIONS[st.session_state.app_lang]["Upload video file"], type=["mp4", "avi", "mov"])
         if uploaded_video is not None:
             temp_file_path = "temp_uploaded_video.mp4"
@@ -910,8 +924,8 @@ else:
                 st.rerun()
 
     # ----------------- SKU Management -----------------
-    elif app_mode == "⚙️ SKU Management":
-        st.subheader("⚙️ " + TRANSLATIONS[st.session_state.app_lang]["Catalog Configuration Settings"])
+    elif app_mode == "SKU Management":
+        st.subheader(TRANSLATIONS[st.session_state.app_lang]["Catalog Configuration Settings"])
         if st.session_state.user_role != "Owner":
             st.error(TRANSLATIONS[st.session_state.app_lang]["Authorized Owner role required"])
         else:
@@ -946,8 +960,8 @@ else:
                     st.rerun()
 
     # ----------------- Before/After Comparison -----------------
-    elif app_mode == "⚖️ Before/After Comparison":
-        st.subheader("⚖️ " + TRANSLATIONS[st.session_state.app_lang]["Shelf Comparison Audit"])
+    elif app_mode == "Before/After Comparison":
+        st.subheader(TRANSLATIONS[st.session_state.app_lang]["Shelf Comparison Audit"])
         col_img1, col_img2 = st.columns(2)
         with col_img1:
             st.write("#### " + TRANSLATIONS[st.session_state.app_lang]["Baseline Snapshot (Morning)"])
@@ -986,8 +1000,8 @@ else:
             st.write(f"**{TRANSLATIONS[st.session_state.app_lang]['Total Revenue Generated']}:** ₹{total_rev:.2f}")
 
     # ----------------- Reports & Analytics -----------------
-    elif app_mode == "📈 Reports & Analytics":
-        st.subheader("📈 " + TRANSLATIONS[st.session_state.app_lang]["Analytics & Reporting Dashboard"])
+    elif app_mode == "Reports & Analytics":
+        st.subheader(TRANSLATIONS[st.session_state.app_lang]["Analytics & Reporting Dashboard"])
         if st.session_state.user_role != "Owner":
             st.error(TRANSLATIONS[st.session_state.app_lang]["Owner clearance required"])
         else:
@@ -1024,8 +1038,8 @@ else:
                 st.info(TRANSLATIONS[st.session_state.app_lang]["No scanning history recorded"])
 
     # ----------------- Notifications & Alerts -----------------
-    elif app_mode == "🔔 Notifications & Alerts":
-        st.subheader("🔔 " + TRANSLATIONS[st.session_state.app_lang]["Low-Stock Alerts Panel"])
+    elif app_mode == "Notifications & Alerts":
+        st.subheader(TRANSLATIONS[st.session_state.app_lang]["Low-Stock Alerts Panel"])
         alerts = check_low_stock()
         
         if alerts:
@@ -1072,8 +1086,8 @@ else:
 
 
     # ----------------- Audit Logs -----------------
-    elif app_mode == "📜 Audit Logs":
-        st.subheader("📜 " + TRANSLATIONS[st.session_state.app_lang]["System Audit Logs"])
+    elif app_mode == "Audit Logs":
+        st.subheader(TRANSLATIONS[st.session_state.app_lang]["System Audit Logs"])
         if st.session_state.user_role != "Owner":
             st.error(TRANSLATIONS[st.session_state.app_lang]["Owner validation required"])
         else:
@@ -1084,8 +1098,8 @@ else:
             else:
                 st.info(TRANSLATIONS[st.session_state.app_lang]["No audit logs"])
 
-    elif app_mode == "🔧 Settings":
-        st.subheader("🔧 " + TRANSLATIONS[st.session_state.app_lang]["System Configurations"])
+    elif app_mode == "Settings":
+        st.subheader(TRANSLATIONS[st.session_state.app_lang]["System Configurations"])
         
         # Theme Settings Toggle (Available to both Owner and Staff)
         st.write("---")
