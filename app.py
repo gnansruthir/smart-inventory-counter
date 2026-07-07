@@ -954,7 +954,10 @@ else:
                     tracked_objects[track_id] = class_name
                 st_frame.image(annotated_frame, use_container_width=True)
             video_cap.release()
-            os.remove(temp_file_path)
+            try:
+                os.remove(temp_file_path)
+            except Exception:
+                pass
             
             # Format tracked items
             class_counts = {}
