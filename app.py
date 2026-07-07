@@ -218,7 +218,8 @@ TRANSLATIONS = {
         "Timestamp": "Timestamp",
         "Total Items": "Total Items",
         "Total Value (₹)": "Total Value (₹)",
-        "Before/After Comparison": "Before/After Comparison"
+        "Before/After Comparison": "Before/After Comparison",
+        "Sensitivity": "Model Sensitivity (Lower values detect items more easily)"
     },
     "Tamil": {
         "title": "ஸ்மார்ட் சரக்குக் கணக்கீட்டு அமைப்பு",
@@ -369,7 +370,8 @@ TRANSLATIONS = {
         "Timestamp": "நேர முத்திரை",
         "Total Items": "மொத்த பொருட்கள்",
         "Total Value (₹)": "மொத்த மதிப்பு (₹)",
-        "Before/After Comparison": "முன்பு/பின்பு ஒப்பீடு"
+        "Before/After Comparison": "முன்பு/பின்பு ஒப்பீடு",
+        "Sensitivity": "மாதிரி உணர்திறன் (குறைந்த மதிப்பு பொருட்களை எளிதாகக் கண்டறியும்)"
     }
 }
 
@@ -803,6 +805,7 @@ else:
     # ----------------- Static Image Upload -----------------
     elif app_mode == "📷 Static Image Upload":
         st.subheader("📷 " + TRANSLATIONS[st.session_state.app_lang]["Static Image Scanner"])
+        conf_val = st.slider(TRANSLATIONS[st.session_state.app_lang]["Sensitivity"], 0.05, 0.90, 0.15, step=0.05)
         uploaded_file = st.file_uploader(TRANSLATIONS[st.session_state.app_lang]["Upload shelf photograph"], type=["jpg", "jpeg", "png"])
         
         if uploaded_file is not None and detector is not None:
@@ -811,7 +814,7 @@ else:
                 st.write("### " + TRANSLATIONS[st.session_state.app_lang]["Shelf Detection View"])
                 with st.spinner(TRANSLATIONS[st.session_state.app_lang]["Analyzing image"]):
                     try:
-                        annotated_image, counts = detector.detect_image(uploaded_file)
+                        annotated_image, counts = detector.detect_image(uploaded_file, conf=conf_val)
                         st.image(annotated_image, use_container_width=True)
                     except Exception as ex:
                         st.error(f"{TRANSLATIONS[st.session_state.app_lang]['Detection failed']}: {ex}")
@@ -869,13 +872,14 @@ else:
     # ----------------- Live Detection -----------------
     elif app_mode == "📹 Live Detection":
         st.subheader("📹 " + TRANSLATIONS[st.session_state.app_lang]["Real-time Tracking Feed"])
+        conf_val = st.slider(TRANSLATIONS[st.session_state.app_lang]["Sensitivity"], 0.05, 0.90, 0.15, step=0.05)
         input_source = st.selectbox(TRANSLATIONS[st.session_state.app_lang]["Select Tracker Input Stream"], [TRANSLATIONS[st.session_state.app_lang]["Webcam Live Input"], TRANSLATIONS[st.session_state.app_lang]["Upload Video File"]])
         
         if input_source == TRANSLATIONS[st.session_state.app_lang]["Webcam Live Input"]:
             st.write(TRANSLATIONS[st.session_state.app_lang]["Capture shelf snapshots"])
             webcam_image = st.camera_input(TRANSLATIONS[st.session_state.app_lang]["Take snap"])
             if webcam_image is not None and detector is not None:
-                annotated_img, counts = detector.detect_image(webcam_image)
+                annotated_img, counts = detector.detect_image(webcam_image, conf=conf_val)
                 st.image(annotated_img, use_container_width=True)
                 
                 tally_data = []
@@ -912,7 +916,7 @@ else:
                     ret, frame = video_cap.read()
                     if not ret:
                         break
-                    annotated_frame, active_tracks = detector.track_frame(frame)
+                    annotated_frame, active_tracks = detector.track_frame(frame, conf=conf_val)
                     for track_id, class_name in active_tracks.items():
                         tracked_objects[track_id] = class_name
                     st_frame.image(annotated_frame, use_container_width=True)
