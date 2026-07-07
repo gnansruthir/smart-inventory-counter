@@ -223,7 +223,9 @@ TRANSLATIONS = {
         "Low stock alert toast": "Low stock detected! Please restock the shelf.",
         "Scan Summary Breakdown": "Summary",
         "items": "items",
-        "Scan History Logs": "Scan History Logs"
+        "Scan History Logs": "Scan History Logs",
+        "Current SKU Catalog": "Current SKU Catalog",
+        "Deleted SKUs History": "Deleted SKU History"
     },
     "Tamil": {
         "title": "ஸ்மார்ட் சரக்குக் கணக்கீட்டு அமைப்பு",
@@ -376,7 +378,9 @@ TRANSLATIONS = {
         "Low stock alert toast": "குறைந்த இருப்பு கண்டறியப்பட்டது! அலமாரியை நிரப்பவும்.",
         "Scan Summary Breakdown": "சுருக்கம்",
         "items": "பொருட்கள்",
-        "Scan History Logs": "ஸ்கேன் வரலாறு பதிவுகள்"
+        "Scan History Logs": "ஸ்கேன் வரலாறு பதிவுகள்",
+        "Current SKU Catalog": "தற்போதைய SKU பட்டியல்",
+        "Deleted SKUs History": "நீக்கப்பட்ட SKU வரலாறு"
     }
 }
 
@@ -946,6 +950,19 @@ else:
         if st.session_state.user_role != "Owner":
             st.error(TRANSLATIONS[st.session_state.app_lang]["Authorized Owner role required"])
         else:
+            # Current SKU Catalog table
+            st.write("### " + TRANSLATIONS[st.session_state.app_lang]["Current SKU Catalog"])
+            catalog_data = []
+            for class_id, details in sku_mapping.items():
+                catalog_data.append({
+                    "YOLO Class ID": class_id,
+                    "Product Name": details.get("sku_name", ""),
+                    "Retail Price (₹)": details.get("price", 0.0),
+                    "Warning Threshold": details.get("low_stock_threshold", 0)
+                })
+            catalog_df = pd.DataFrame(catalog_data)
+            st.dataframe(catalog_df, use_container_width=True)
+
             with st.form("add_sku_form"):
                 st.write("### " + TRANSLATIONS[st.session_state.app_lang]["Add / Update SKU Mapping"])
                 class_name = st.text_input(TRANSLATIONS[st.session_state.app_lang]["YOLO Class ID"]).lower().strip()
@@ -975,6 +992,21 @@ else:
                     db_manager.log_audit("Owner", f"Deleted SKU Mapping for class: {class_to_delete}")
                     st.success(TRANSLATIONS[st.session_state.app_lang]["SKU Mapping deleted"])
                     st.rerun()
+
+            # Deleted SKUs History section
+            st.write("### " + TRANSLATIONS[st.session_state.app_lang]["Deleted SKUs History"])
+            audit_logs = db_manager.get_audit_logs()
+            deleted_logs = []
+            for log in audit_logs:
+                # log structure: (id, timestamp, user_role, action)
+                if "Deleted SKU Mapping" in log[3]:
+                    deleted_logs.append({
+                        "Timestamp": log[1],
+                        "User Role": log[2],
+                        "Action Details": log[3]
+                    })
+            deleted_df = pd.DataFrame(deleted_logs)
+            st.dataframe(deleted_df, use_container_width=True)
 
     # ----------------- Before/After Comparison -----------------
     elif app_mode == "Before/After Comparison":

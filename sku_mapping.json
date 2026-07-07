@@ -1,9 +1,4 @@
 {
-  "bottle": {
-    "sku_name": "Classic Coca-Cola 500ml",
-    "price": 45.0,
-    "low_stock_threshold": 10
-  },
   "box": {
     "sku_name": "Cardboard Packing Box",
     "price": 20.0,
