@@ -12,7 +12,7 @@ class InventoryDetector:
         # COCO Class IDs: 24 (backpack), 26 (handbag), 28 (suitcase), 39 (bottle), 41 (cup), 45 (bowl), 73 (book), 75 (vase)
         self.COCO_RETAIL_CLASSES = [24, 26, 28, 39, 41, 45, 73, 75]
         
-        # Map raw COCO prediction names to our catalog inventory keys (bottle, box, cup, can)
+        # Map raw COCO prediction names to our catalog inventory keys (bottle, box, cup)
         self.RETAIL_NAME_MAP = {
             "backpack": "box",
             "handbag": "box",
@@ -41,13 +41,38 @@ class InventoryDetector:
             
         results = self.model(image, conf=conf, classes=self.COCO_RETAIL_CLASSES)
         result = results[0]  
-        annotated_image = result.plot()  
+        
+        # Draw custom bounding boxes manually to ignore any outside allowed classes
+        annotated_image = image.copy()
         class_counts = {}
-        for box in result.boxes:
-            class_id = int(box.cls[0])
-            raw_class_name = self.model.names[class_id]
-            mapped_name = self.RETAIL_NAME_MAP.get(raw_class_name, raw_class_name)
-            class_counts[mapped_name] = class_counts.get(mapped_name, 0) + 1
+        
+        if result.boxes is not None:
+            boxes_data = result.boxes.xyxy.cpu().numpy()
+            clss = result.boxes.cls.cpu().numpy().astype(int)
+            confs = result.boxes.conf.cpu().numpy()
+            
+            for idx, box in enumerate(boxes_data):
+                cls_id = clss[idx]
+                raw_name = self.model.names[cls_id]
+                
+                if raw_name in self.RETAIL_NAME_MAP:
+                    mapped_name = self.RETAIL_NAME_MAP[raw_name]
+                    class_counts[mapped_name] = class_counts.get(mapped_name, 0) + 1
+                    
+                    # Draw box and label
+                    x1, y1, x2, y2 = map(int, box)
+                    conf_val = confs[idx]
+                    label = f"{mapped_name} {conf_val:.2f}"
+                    
+                    # Blue for bottles, Purple for boxes, Green for cups
+                    color = (255, 0, 0) # Blue
+                    if mapped_name == "box":
+                        color = (128, 0, 128) # Purple
+                    elif mapped_name == "cup":
+                        color = (0, 128, 0) # Green
+                        
+                    cv2.rectangle(annotated_image, (x1, y1), (x2, y2), color, 2)
+                    cv2.putText(annotated_image, label, (x1, max(15, y1 - 5)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
             
         annotated_image_rgb = cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB)
         return annotated_image_rgb, class_counts
@@ -60,24 +85,44 @@ class InventoryDetector:
             results = self.model(frame, verbose=False, conf=conf, classes=self.COCO_RETAIL_CLASSES)
             
         result = results[0]
-        annotated_frame = result.plot()
-        annotated_frame_rgb = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
-
+        
+        # Draw custom bounding boxes manually to prevent plotting forbidden classes (like refrigerator, train)
+        annotated_frame = frame.copy()
         active_tracks = {}
+        
         if result.boxes is not None:
-            clss = result.boxes.cls.int().tolist()
-            if hasattr(result.boxes, 'id') and result.boxes.id is not None:
-                ids = result.boxes.id.int().tolist()
-                for obj_id, cls_id in zip(ids, clss):
-                    raw_name = self.model.names[cls_id]
-                    mapped_name = self.RETAIL_NAME_MAP.get(raw_name, raw_name)
-                    active_tracks[str(obj_id)] = mapped_name
-            else:
-                for idx, cls_id in enumerate(clss):
-                    raw_name = self.model.names[cls_id]
-                    mapped_name = self.RETAIL_NAME_MAP.get(raw_name, raw_name)
-                    active_tracks[f"det_{idx}"] = mapped_name
+            boxes_data = result.boxes.xyxy.cpu().numpy()
+            clss = result.boxes.cls.cpu().numpy().astype(int)
+            confs = result.boxes.conf.cpu().numpy()
+            ids = result.boxes.id.cpu().numpy().astype(int) if (hasattr(result.boxes, 'id') and result.boxes.id is not None) else None
+            
+            for idx, box in enumerate(boxes_data):
+                cls_id = clss[idx]
+                raw_name = self.model.names[cls_id]
+                
+                if raw_name in self.RETAIL_NAME_MAP:
+                    mapped_name = self.RETAIL_NAME_MAP[raw_name]
+                    obj_id = str(ids[idx]) if ids is not None else f"det_{idx}"
+                    active_tracks[obj_id] = mapped_name
+                    
+                    # Draw box and label
+                    x1, y1, x2, y2 = map(int, box)
+                    conf_val = confs[idx]
+                    label = f"{mapped_name} {conf_val:.2f}"
+                    if ids is not None:
+                        label = f"id:{ids[idx]} {label}"
+                        
+                    # Blue for bottles, Purple for boxes, Green for cups
+                    color = (255, 0, 0) # Blue
+                    if mapped_name == "box":
+                        color = (128, 0, 128) # Purple
+                    elif mapped_name == "cup":
+                        color = (0, 128, 0) # Green
+                        
+                    cv2.rectangle(annotated_frame, (x1, y1), (x2, y2), color, 2)
+                    cv2.putText(annotated_frame, label, (x1, max(15, y1 - 5)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
+        annotated_frame_rgb = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
         return annotated_frame_rgb, active_tracks
 
 # Quick self-test script block
