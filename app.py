@@ -100,15 +100,10 @@ else:
             section[data-testid="stSidebar"] {
                 background-color: #111111 !important;
             }
-            section[data-testid="stSidebar"] h1,
-            section[data-testid="stSidebar"] h2,
-            section[data-testid="stSidebar"] h3,
-            section[data-testid="stSidebar"] label,
-            section[data-testid="stSidebar"] p,
-            section[data-testid="stSidebar"] span,
-            section[data-testid="stSidebar"] div {
+            section[data-testid="stSidebar"] * {
                 color: #ffffff !important;
             }
+
             input, select, textarea, [data-baseweb="input"], [data-baseweb="select"] > div, button[role="combobox"] span {
                 background-color: #222222 !important;
                 color: #ffffff !important;
