@@ -9,6 +9,9 @@ import base64
 from datetime import datetime
 from db_manager import DBManager
 from detector import InventoryDetector
+import importlib
+import report_generator
+importlib.reload(report_generator)
 from report_generator import generate_pdf_report, generate_csv_report
 
 st.set_page_config(
