@@ -748,8 +748,7 @@ else:
             """, unsafe_allow_html=True)
 
         if alerts:
-            # Emoji warning title stripped as per instructions (e.g. replacing "⚠️ Active Replenishment Warnings" with "Active Replenishment Warnings")
-            st.error("### " + TRANSLATIONS[st.session_state.app_lang]["Active Replenishment Warnings"])
+            st.markdown(f"### {TRANSLATIONS[st.session_state.app_lang]['Active Replenishment Warnings']}")
             for warning in alerts:
                 st.markdown(f"- {warning}")
         else:

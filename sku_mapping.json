@@ -1,22 +1,22 @@
 {
   "bottle": {
     "sku_name": "Classic Coca-Cola 500ml",
-    "price": 1.99,
+    "price": 45.0,
     "low_stock_threshold": 10
   },
   "box": {
     "sku_name": "Cardboard Packing Box",
-    "price": 2.99,
+    "price": 20.0,
     "low_stock_threshold": 5
   },
   "cup": {
     "sku_name": "Paper Coffee Cup",
-    "price": 0.49,
+    "price": 10.0,
     "low_stock_threshold": 25
   },
   "can": {
     "sku_name": "Sprite Can 330ml",
-    "price": 1.25,
+    "price": 35.0,
     "low_stock_threshold": 15
   }
 }
