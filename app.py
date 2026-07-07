@@ -105,9 +105,35 @@ else:
             }
             .main {
                 background-color: #ffffff !important;
-                color: #0f172a !important;
+                color: #000000 !important;
+            }
+            h1, h2, h3, h4, h5, h6, label, p, span, div, strong, small {
+                color: #000000 !important;
+            }
+            div[data-testid="stMetricValue"] > div {
+                color: #000000 !important;
+            }
+            .metric-card {
+                background-color: #ffffff !important;
+                border: 1px solid #cbd5e1 !important;
+            }
+            section[data-testid="stSidebar"] h1,
+            section[data-testid="stSidebar"] h2,
+            section[data-testid="stSidebar"] h3,
+            section[data-testid="stSidebar"] label,
+            section[data-testid="stSidebar"] p,
+            section[data-testid="stSidebar"] span,
+            section[data-testid="stSidebar"] div {
+                color: #000000 !important;
+            }
+            input, select, textarea, [data-baseweb="input"], [data-baseweb="select"] > div, button[role="combobox"] span {
+                background-color: #f1f5f9 !important;
+                color: #000000 !important;
+                -webkit-text-fill-color: #000000 !important;
+                border: 1px solid #cbd5e1 !important;
             }
         """
+
 
 
 # Custom premium styling
@@ -273,35 +299,34 @@ else:
     
     if st.session_state.user_role == "Owner":
         menu_options = [
-            "🏠 Owner Dashboard", 
-            "📋 Inventory List",
-            "📷 Static Image Upload", 
-            "📹 Live Detection", 
-            "⚖️ Before/After Comparison",
-            "⚙️ SKU Management", 
-            "📈 Reports & Analytics", 
-            "🔔 Notifications & Alerts", 
-            "📜 Audit Logs", 
-            "🔧 Settings"
+            "Owner Dashboard", 
+            "Live Detection", 
+            "Static Image Upload", 
+            "SKU Management", 
+            "Inventory List", 
+            "Reports & Analytics", 
+            "Notifications/Alerts Settings", 
+            "Audit Logs", 
+            "Settings"
         ]
     else:
         menu_options = [
-            "🏠 Staff Dashboard", 
-            "📋 Inventory List",
-            "📷 Static Image Upload", 
-            "📹 Live Detection", 
-            "🔔 Notifications & Alerts", 
-            "🔧 Settings"
+            "Staff Dashboard", 
+            "Live Detection", 
+            "Static Image Upload", 
+            "Inventory List", 
+            "Notifications/Alerts"
         ]
         
     app_mode = st.sidebar.radio("Navigate View", menu_options)
     
-    if st.sidebar.button("🚪 Logout"):
+    if st.sidebar.button("Logout"):
         db_manager.log_audit(st.session_state.user_role, f"User {st.session_state.user_role.lower()} logged out")
         st.session_state.logged_in = False
         st.session_state.user_role = None
         st.session_state.current_page = "Landing"
         st.rerun()
+
 
     # Define standard classes threshold configurations check helper
     def check_low_stock():
