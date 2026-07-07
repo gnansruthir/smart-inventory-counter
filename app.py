@@ -87,11 +87,20 @@ else:
                 background-color: #000000 !important;
                 color: #ffffff !important;
             }
-            .main h1, .main h2, .main h3, .main h4, .main h5, .main h6, 
-            .main label, .main p, .main span, .main strong, .main small, .main li {
-                color: #ffffff !important;
-            }
-            .main div[data-testid="stMetricValue"] > div {
+            [data-testid="stAppViewBlockContainer"] h1, 
+            [data-testid="stAppViewBlockContainer"] h2, 
+            [data-testid="stAppViewBlockContainer"] h3, 
+            [data-testid="stAppViewBlockContainer"] h4, 
+            [data-testid="stAppViewBlockContainer"] h5, 
+            [data-testid="stAppViewBlockContainer"] h6, 
+            [data-testid="stAppViewBlockContainer"] p, 
+            [data-testid="stAppViewBlockContainer"] label, 
+            [data-testid="stAppViewBlockContainer"] span, 
+            [data-testid="stAppViewBlockContainer"] li, 
+            [data-testid="stAppViewBlockContainer"] strong, 
+            [data-testid="stAppViewBlockContainer"] small,
+            [data-testid="stMetricValue"] > div,
+            [data-testid="stMetricLabel"] > div {
                 color: #ffffff !important;
             }
             .metric-card {
@@ -125,24 +134,27 @@ else:
                 background-color: #ffffff !important;
                 color: #000000 !important;
             }
-            .main h1, .main h2, .main h3, .main h4, .main h5, .main h6, 
-            .main label, .main p, .main span, .main strong, .main small, .main li {
-                color: #000000 !important;
-            }
-            .main div[data-testid="stMetricValue"] > div {
+            [data-testid="stAppViewBlockContainer"] h1, 
+            [data-testid="stAppViewBlockContainer"] h2, 
+            [data-testid="stAppViewBlockContainer"] h3, 
+            [data-testid="stAppViewBlockContainer"] h4, 
+            [data-testid="stAppViewBlockContainer"] h5, 
+            [data-testid="stAppViewBlockContainer"] h6, 
+            [data-testid="stAppViewBlockContainer"] p, 
+            [data-testid="stAppViewBlockContainer"] label, 
+            [data-testid="stAppViewBlockContainer"] span, 
+            [data-testid="stAppViewBlockContainer"] li, 
+            [data-testid="stAppViewBlockContainer"] strong, 
+            [data-testid="stAppViewBlockContainer"] small,
+            [data-testid="stMetricValue"] > div,
+            [data-testid="stMetricLabel"] > div {
                 color: #000000 !important;
             }
             .metric-card {
                 background-color: #ffffff !important;
                 border: 1px solid #cbd5e1 !important;
             }
-            section[data-testid="stSidebar"] h1,
-            section[data-testid="stSidebar"] h2,
-            section[data-testid="stSidebar"] h3,
-            section[data-testid="stSidebar"] label,
-            section[data-testid="stSidebar"] p,
-            section[data-testid="stSidebar"] span,
-            section[data-testid="stSidebar"] div {
+            section[data-testid="stSidebar"] * {
                 color: #000000 !important;
             }
             .main input, .main select, .main textarea, .main [data-baseweb="input"], .main [data-baseweb="select"] > div, .main button[role="combobox"] span {
@@ -152,6 +164,7 @@ else:
                 border: 1px solid #cbd5e1 !important;
             }
         """
+
 
 
 
@@ -364,7 +377,7 @@ else:
 
     # ----------------- Dashboard (Owner / Staff) -----------------
     if "Dashboard" in app_mode:
-        st.subheader(f"🏠 {st.session_state.user_role} Dashboard")
+        st.subheader(f"{st.session_state.user_role} Dashboard")
         
         # Pull latest summaries from SQLite
         scans = db_manager.get_all_scans()
