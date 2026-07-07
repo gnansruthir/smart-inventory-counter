@@ -106,8 +106,7 @@ TRANSLATIONS = {
         "SKU Management": "SKU Management",
         "Inventory List": "Inventory List",
         "Reports & Analytics": "Reports & Analytics",
-        "Notifications/Alerts Settings": "Notifications/Alerts Settings",
-        "Notifications/Alerts": "Notifications/Alerts",
+        "Low stock count": "Low stock count",
         "Audit Logs": "Audit Logs",
         "Settings": "Settings",
         "Central Inventory List": "Central Inventory List",
@@ -182,7 +181,6 @@ TRANSLATIONS = {
         "Past Scanning Logs": "Past Scanning Logs",
         "Export History Log to CSV": "Export History Log to CSV",
         "No scanning history recorded": "No scanning history recorded in SQLite.",
-        "Low-Stock Alerts Panel": "Low-Stock Alerts Panel",
         "Inventory items below target": "Inventory items are below their target targets:",
         "All catalog products stocked": "All catalog products are fully stocked!",
         "Configure Warning Notification Channels": "Configure Warning Notification Channels",
@@ -258,8 +256,7 @@ TRANSLATIONS = {
         "SKU Management": "SKU மேலாண்மை",
         "Inventory List": "சரக்கு பட்டியல்",
         "Reports & Analytics": "அறிக்கைகள் & பகுப்பாய்வு",
-        "Notifications/Alerts Settings": "அறிவிப்புகள்/எச்சரிக்கைகள் அமைப்புகள்",
-        "Notifications/Alerts": "அறிவிப்புகள்/எச்சரிக்கைகள்",
+        "Low stock count": "குறைந்த இருப்பு எண்ணிக்கை",
         "Audit Logs": "தணிக்கை பதிவுகள்",
         "Settings": "அமைப்புகள்",
         "Central Inventory List": "மத்திய சரக்கு பட்டியல்",
@@ -334,7 +331,6 @@ TRANSLATIONS = {
         "Past Scanning Logs": "கடந்த கால ஸ்கேனிங் பதிவுகள்",
         "Export History Log to CSV": "வரலாற்றுப் பதிவை CSV கோப்பாக ஏற்றுமதி செய்க",
         "No scanning history recorded": "SQLite-இல் ஸ்கேனிங் வரலாறு எதுவும் பதிவு செய்யப்படவில்லை.",
-        "Low-Stock Alerts Panel": "குறைந்த பங்கு எச்சரிக்கை குழு",
         "Inventory items below target": "சரக்கு பொருட்கள் அவற்றின் இலக்கு வரம்பிற்கு கீழே உள்ளன:",
         "All catalog products stocked": "அனைத்து தயாரிப்புகளும் முழுமையாக இருப்பு வைக்கப்பட்டுள்ளன!",
         "Configure Warning Notification Channels": "எச்சரிக்கை அறிவிப்பு சேனல்களை கட்டமைக்கவும்",
@@ -670,7 +666,7 @@ else:
             "SKU Management", 
             "Inventory List", 
             "Reports & Analytics", 
-            "Notifications/Alerts Settings", 
+            "Low stock count", 
             "Audit Logs", 
             "Settings"
         ]
@@ -680,7 +676,7 @@ else:
             "Live Detection", 
             "Static Image Upload", 
             "Inventory List", 
-            "Notifications/Alerts"
+            "Low stock count"
         ]
 
     # Map the English options to the app_mode values used in the conditional checks
@@ -692,8 +688,7 @@ else:
         "SKU Management": "SKU Management",
         "Inventory List": "Inventory List",
         "Reports & Analytics": "Reports & Analytics",
-        "Notifications/Alerts Settings": "Notifications & Alerts",
-        "Notifications/Alerts": "Notifications & Alerts",
+        "Low stock count": "Low stock count",
         "Audit Logs": "Audit Logs",
         "Settings": "Settings"
     }
@@ -1038,12 +1033,12 @@ else:
                 st.info(TRANSLATIONS[st.session_state.app_lang]["No scanning history recorded"])
 
     # ----------------- Notifications & Alerts -----------------
-    elif app_mode == "Notifications & Alerts":
-        st.subheader(TRANSLATIONS[st.session_state.app_lang]["Low-Stock Alerts Panel"])
+    elif app_mode == "Low stock count":
+        st.subheader(TRANSLATIONS[st.session_state.app_lang]["Low stock count"])
         alerts = check_low_stock()
         
         if alerts:
-            st.error(f"⚠️ {len(alerts)} {TRANSLATIONS[st.session_state.app_lang]['Inventory items below target']}")
+            st.markdown(f"**{len(alerts)} {TRANSLATIONS[st.session_state.app_lang]['Inventory items below target']}**")
             for item in alerts:
                 st.write(f"- {item}")
         else:
