@@ -928,7 +928,10 @@ else:
             st.write(f"### {TRANSLATIONS[st.session_state.app_lang]['Scan Summary Breakdown']}")
             for item in video_items:
                 st.write(f"- **{item['sku_name']}**: {item['count']} {TRANSLATIONS[st.session_state.app_lang]['items']}")
-            if st.button(f"💾 {TRANSLATIONS[st.session_state.app_lang]['Log Video Track to SQL']}"):
+            
+            # Automatic database logging
+            video_key = f"{uploaded_video.name}_{total_items}_{total_val}"
+            if st.session_state.get("last_auto_logged_video") != video_key:
                 db_items = [{
                     'sku_name': item['sku_name'],
                     'detected_class': item['detected_class'],
@@ -937,8 +940,9 @@ else:
                 } for item in video_items]
                 db_manager.log_scan(total_items, total_val, db_items)
                 db_manager.log_audit(st.session_state.user_role, f"Logged tracking video log containing {total_items} items")
+                st.session_state.last_auto_logged_video = video_key
                 st.success(TRANSLATIONS[st.session_state.app_lang]["Video track logged"])
-                st.rerun()
+
 
     # ----------------- SKU Management -----------------
     elif app_mode == "SKU Management":
