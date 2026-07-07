@@ -89,7 +89,7 @@ def generate_pdf_report(tally_data, total_items, total_value, translations, lang
     )
 
     # Title & Metadata
-    report_title = f"{translations[lang]['title']} - {translations[lang]['Item List']}"
+    report_title = f"{translations['English']['title']} - {translations['English']['Item List']}"
     story.append(Paragraph(report_title, title_style))
     
     timestamp_str = f"Date/Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
@@ -98,8 +98,8 @@ def generate_pdf_report(tally_data, total_items, total_value, translations, lang
 
     # Summary table
     summary_data = [
-        [Paragraph(translations[lang]["Items Counted"], cell_style), Paragraph(str(total_items), cell_style)],
-        [Paragraph(translations[lang]["Total Value"], cell_style), Paragraph(f"Rs. {total_value:.2f}", cell_style)]
+        [Paragraph(translations["English"]["Items Counted"], cell_style), Paragraph(str(total_items), cell_style)],
+        [Paragraph(translations["English"]["Total Value"], cell_style), Paragraph(f"Rs. {total_value:.2f}", cell_style)]
     ]
     summary_table = Table(summary_data, colWidths=[200, 150])
     summary_table.setStyle(TableStyle([
@@ -112,12 +112,12 @@ def generate_pdf_report(tally_data, total_items, total_value, translations, lang
 
     # Items table headers
     headers = [
-        Paragraph(translations[lang]["Product Name"], header_cell_style),
-        Paragraph(translations[lang]["Item"], header_cell_style),
-        Paragraph(translations[lang]["Current Count"], header_cell_style),
-        Paragraph(translations[lang]["Price"], header_cell_style),
-        Paragraph(translations[lang]["Min Item"], header_cell_style),
-        Paragraph(translations[lang]["Status"], header_cell_style)
+        Paragraph(translations["English"]["Product Name"], header_cell_style),
+        Paragraph(translations["English"]["Item"], header_cell_style),
+        Paragraph(translations["English"]["Current Count"], header_cell_style),
+        Paragraph(translations["English"]["Price"], header_cell_style),
+        Paragraph(translations["English"]["Min Item"], header_cell_style),
+        Paragraph(translations["English"]["Status"], header_cell_style)
     ]
     table_content = [headers]
     
