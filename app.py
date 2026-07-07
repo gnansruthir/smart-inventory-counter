@@ -36,7 +36,10 @@ sku_mapping = load_sku_mapping()
 
 @st.cache_resource
 def get_detector():
-    return InventoryDetector()
+    import importlib
+    import detector
+    importlib.reload(detector)
+    return detector.InventoryDetector()
 
 try:
     detector = get_detector()
