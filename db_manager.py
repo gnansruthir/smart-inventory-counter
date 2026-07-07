@@ -3,7 +3,10 @@ import os
 from datetime import datetime
 
 class DBManager:
-    def __init__(self, db_path="data/inventory.db"):
+    def __init__(self, db_path=None):
+        if db_path is None:
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            db_path = os.path.join(base_dir, "data", "inventory.db")
         self.db_path = db_path
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
         self.init_db()

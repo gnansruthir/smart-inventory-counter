@@ -18,7 +18,8 @@ st.set_page_config(
 )
 
 # Initialize database manager and YOLO model
-SKU_FILE = "sku_mapping.json"
+base_dir = os.path.dirname(os.path.abspath(__file__))
+SKU_FILE = os.path.join(base_dir, "sku_mapping.json")
 db_manager = DBManager()
 
 def load_sku_mapping():
