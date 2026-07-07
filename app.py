@@ -151,18 +151,18 @@ TRANSLATIONS = {
         "Log Video Track to SQL": "Log Video Track to SQL",
         "Video track logged": "Video track logged!",
         "Validated": "Validated",
-        "Catalog Configuration Settings": "Catalog Configuration Settings",
+        "Catalog Configuration Settings": "Item List",
         "Authorized Owner role required": "Authorized Owner role is required to modify SKU mappings.",
-        "Add / Update SKU Mapping": "Add / Update SKU Mapping",
+        "Add / Update SKU Mapping": "Add / Update Item",
         "YOLO Class ID": "YOLO Class ID (e.g. 'bottle', 'cup')",
         "Product Name Input": "Product Name (e.g. 'Pepsi 500ml')",
         "Retail Unit Price (₹)": "Retail Unit Price (₹)",
         "Low Stock Threshold Alert": "Low Stock Threshold Alert",
-        "Save SKU Config": "Save SKU Config",
+        "Save SKU Config": "Save Item",
         "Successfully configured SKU mapping": "Successfully configured SKU mapping!",
-        "Delete SKU Mapping": "Delete SKU Mapping",
+        "Delete SKU Mapping": "Delete Item",
         "Select YOLO Class to delete": "Select YOLO Class to delete",
-        "Delete SKU Config": "Delete SKU Config",
+        "Delete SKU Config": "Delete Item",
         "SKU Mapping deleted": "SKU Mapping deleted!",
         "Shelf Comparison Audit": "Shelf Comparison Audit",
         "Baseline Snapshot (Morning)": "Baseline Snapshot (Morning)",
@@ -306,18 +306,18 @@ TRANSLATIONS = {
         "Log Video Track to SQL": "வீடியோ கண்காணிப்பை SQL இல் பதிவு செய்க",
         "Video track logged": "வீடியோ கண்காணிப்பு பதிவு செய்யப்பட்டது!",
         "Validated": "சரிபார்க்கப்பட்டது",
-        "Catalog Configuration Settings": "பட்டியல் கட்டமைப்பு அமைப்புகள்",
+        "Catalog Configuration Settings": "பொருட்கள் பட்டியல்",
         "Authorized Owner role required": "SKU மேப்பிங்கை மாற்ற அங்கீகரிக்கப்பட்ட உரிமையாளர் பங்கு தேவை.",
-        "Add / Update SKU Mapping": "SKU மேப்பிங்கைச் சேர்க்கவும் / புதுப்பிக்கவும்",
+        "Add / Update SKU Mapping": "பொருளைச் சேர் / புதுப்பி",
         "YOLO Class ID": "YOLO வகுப்பு ஐடி (எ.கா. 'bottle', 'cup')",
         "Product Name Input": "தயாரிப்பு பெயர் (எ.கா. 'Pepsi 500ml')",
         "Retail Unit Price (₹)": "சில்லறை அலகு விலை (₹)",
         "Low Stock Threshold Alert": "குறைந்த பங்கு வரம்பு எச்சரிக்கை",
-        "Save SKU Config": "SKU கட்டமைப்பைச் சேமிக்கவும்",
+        "Save SKU Config": "பொருளைச் சேமி",
         "Successfully configured SKU mapping": "SKU மேப்பிங் வெற்றிகரமாக கட்டமைக்கப்பட்டது!",
-        "Delete SKU Mapping": "SKU மேப்பிங்கை நீக்குக",
+        "Delete SKU Mapping": "பொருளை நீக்கு",
         "Select YOLO Class to delete": "நீக்க வேண்டிய YOLO வகுப்பைத் தேர்ந்தெடுக்கவும்",
-        "Delete SKU Config": "SKU கட்டமைப்பை நீக்குக",
+        "Delete SKU Config": "பொருளை நீக்கு",
         "SKU Mapping deleted": "SKU மேப்பிங் நீக்கப்பட்டது!",
         "Shelf Comparison Audit": "அலமாரி ஒப்பீட்டு தணிக்கை",
         "Baseline Snapshot (Morning)": "அடிப்படை படம் (காலை)",
@@ -508,19 +508,22 @@ st.markdown(f"""
             font-weight: 700;
             color: #0f172a;
         }}
-        .stButton>button {{
-            background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
-            color: white;
-            border-radius: 10px;
-            border: none;
-            padding: 10px 20px;
-            font-weight: 600;
-            box-shadow: 0 4px 14px 0 rgba(124, 58, 237, 0.4);
-            transition: all 0.3s ease;
+        .stButton>button,
+        [data-testid="stFormSubmitButton"] button {{
+            background-color: #7c3aed !important;
+            background: #7c3aed !important;
+            color: #ffffff !important;
+            border-radius: 8px !important;
+            border: none !important;
+            padding: 8px 16px !important;
+            box-shadow: none !important;
+            transition: none !important;
+            transform: none !important;
         }}
-        .stButton>button:hover {{
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px 0 rgba(124, 58, 237, 0.6);
+        .stButton>button *,
+        [data-testid="stFormSubmitButton"] button * {{
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
         }}
         .header-container {{
             background: transparent !important;
@@ -554,12 +557,11 @@ st.markdown(f"""
         
         /* Floating layout for login box */
         div[data-testid="stForm"] {{
-            animation: floatAnimation 4s ease-in-out infinite;
             background-color: #ffffff !important;
-            border: 2px solid #7c3aed !important;
-            border-radius: 16px !important;
-            box-shadow: 0 10px 40px rgba(124, 58, 237, 0.6) !important;
-            padding: 2rem !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+            padding: 1.5rem !important;
         }}
 
         /* Force black tabs labels */
