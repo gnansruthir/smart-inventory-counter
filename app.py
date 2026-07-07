@@ -106,7 +106,7 @@ TRANSLATIONS = {
         "Staff Dashboard": "Staff Dashboard",
         "Video Detection": "Video Detection",
         "Image Detection": "Image Detection",
-        "SKU Management": "SKU Management",
+        "Items Count": "Items Count",
         "Reports & Analytics": "Reports & Analytics",
         "Low stock count": "Low stock count",
         "Audit Logs": "Audit Logs",
@@ -157,7 +157,7 @@ TRANSLATIONS = {
         "YOLO Class ID": "Item",
         "Product Name Input": "Product Name (e.g. 'Pepsi 500ml')",
         "Retail Unit Price (₹)": "Retail Unit Price (₹)",
-        "Low Stock Threshold Alert": "Low Stock Threshold Alert",
+        "Low Stock Threshold Alert": "Min Item",
         "Save SKU Config": "Save Item",
         "Successfully configured SKU mapping": "Successfully configured SKU mapping!",
         "Delete SKU Mapping": "Delete Item",
@@ -261,7 +261,7 @@ TRANSLATIONS = {
         "Staff Dashboard": "பணியாளர் டாஷ்போர்டு",
         "Video Detection": "வீடியோ கண்டறிதல்",
         "Image Detection": "படம் கண்டறிதல்",
-        "SKU Management": "SKU மேலாண்மை",
+        "Items Count": "பொருட்கள் எண்ணிக்கை",
         "Reports & Analytics": "அறிக்கைகள் & பகுப்பாய்வு",
         "Low stock count": "குறைந்த இருப்பு எண்ணிக்கை",
         "Audit Logs": "தணிக்கை பதிவுகள்",
@@ -312,7 +312,7 @@ TRANSLATIONS = {
         "YOLO Class ID": "பொருள்",
         "Product Name Input": "தயாரிப்பு பெயர் (எ.கா. 'Pepsi 500ml')",
         "Retail Unit Price (₹)": "சில்லறை அலகு விலை (₹)",
-        "Low Stock Threshold Alert": "குறைந்த பங்கு வரம்பு எச்சரிக்கை",
+        "Low Stock Threshold Alert": "குறைந்தபட்ச பொருட்கள்",
         "Save SKU Config": "பொருளைச் சேமி",
         "Successfully configured SKU mapping": "SKU மேப்பிங் வெற்றிகரமாக கட்டமைக்கப்பட்டது!",
         "Delete SKU Mapping": "பொருளை நீக்கு",
@@ -678,7 +678,7 @@ else:
             "Owner Dashboard", 
             "Video Detection", 
             "Image Detection", 
-            "SKU Management"
+            "Items Count"
         ]
     else:
         menu_options = [
@@ -693,7 +693,7 @@ else:
         "Staff Dashboard": "Staff Dashboard",
         "Video Detection": "Video Detection",
         "Image Detection": "Image Detection",
-        "SKU Management": "SKU Management"
+        "Items Count": "Items Count"
     }
 
     app_mode_raw = st.sidebar.radio(
@@ -947,7 +947,7 @@ else:
 
 
     # ----------------- SKU Management -----------------
-    elif app_mode == "SKU Management":
+    elif app_mode == "Items Count":
         st.subheader(TRANSLATIONS[st.session_state.app_lang]["Catalog Configuration Settings"])
         if st.session_state.user_role != "Owner":
             st.error(TRANSLATIONS[st.session_state.app_lang]["Authorized Owner role required"])
