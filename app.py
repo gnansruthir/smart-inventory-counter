@@ -457,11 +457,16 @@ else:
                 color: #ffffff !important;
                 -webkit-text-fill-color: #ffffff !important;
             }
-            .main input, .main select, .main textarea, .main [data-baseweb="input"], .main [data-baseweb="select"] > div, .main button[role="combobox"] span {
+            .main input, .main select, .main textarea, .main [data-baseweb="input"], .main [data-baseweb="select"] > div, .main button[role="combobox"] span, div[data-testid="stNumberInput"] button {
                 background-color: #222222 !important;
                 color: #ffffff !important;
                 -webkit-text-fill-color: #ffffff !important;
                 border: 1px solid #444444 !important;
+            }
+            div[data-testid="stNumberInput"] button *,
+            div[data-testid="stNumberInput"] button {
+                color: #ffffff !important;
+                -webkit-text-fill-color: #ffffff !important;
             }
             [data-testid="stFileUploaderDropzone"] {
                 background-color: #1e293b !important;
@@ -499,11 +504,16 @@ else:
                 color: #ffffff !important;
                 -webkit-text-fill-color: #ffffff !important;
             }
-            .main input, .main select, .main textarea, .main [data-baseweb="input"], .main [data-baseweb="select"] > div, .main button[role="combobox"] span {
+            .main input, .main select, .main textarea, .main [data-baseweb="input"], .main [data-baseweb="select"] > div, .main button[role="combobox"] span, div[data-testid="stNumberInput"] button {
                 background-color: #f1f5f9 !important;
                 color: #000000 !important;
                 -webkit-text-fill-color: #000000 !important;
                 border: 1px solid #cbd5e1 !important;
+            }
+            div[data-testid="stNumberInput"] button *,
+            div[data-testid="stNumberInput"] button {
+                color: #000000 !important;
+                -webkit-text-fill-color: #000000 !important;
             }
             [data-testid="stFileUploaderDropzone"] {
                 background-color: #f8fafc !important;
