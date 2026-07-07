@@ -150,6 +150,7 @@ TRANSLATIONS = {
         "Valuation": "Valuation",
         "Log Video Track to SQL": "Log Video Track to SQL",
         "Video track logged": "Video track logged!",
+        "Validated": "Validated",
         "Catalog Configuration Settings": "Catalog Configuration Settings",
         "Authorized Owner role required": "Authorized Owner role is required to modify SKU mappings.",
         "Add / Update SKU Mapping": "Add / Update SKU Mapping",
@@ -301,6 +302,7 @@ TRANSLATIONS = {
         "Valuation": "மதிப்பீடு",
         "Log Video Track to SQL": "வீடியோ கண்காணிப்பை SQL இல் பதிவு செய்க",
         "Video track logged": "வீடியோ கண்காணிப்பு பதிவு செய்யப்பட்டது!",
+        "Validated": "சரிபார்க்கப்பட்டது",
         "Catalog Configuration Settings": "பட்டியல் கட்டமைப்பு அமைப்புகள்",
         "Authorized Owner role required": "SKU மேப்பிங்கை மாற்ற அங்கீகரிக்கப்பட்ட உரிமையாளர் பங்கு தேவை.",
         "Add / Update SKU Mapping": "SKU மேப்பிங்கைச் சேர்க்கவும் / புதுப்பிக்கவும்",
@@ -941,7 +943,7 @@ else:
                 db_manager.log_scan(total_items, total_val, db_items)
                 db_manager.log_audit(st.session_state.user_role, f"Logged tracking video log containing {total_items} items")
                 st.session_state.last_auto_logged_video = video_key
-                st.success(TRANSLATIONS[st.session_state.app_lang]["Video track logged"])
+                st.markdown(f"**{TRANSLATIONS[st.session_state.app_lang]['Validated']}**")
 
 
     # ----------------- SKU Management -----------------
