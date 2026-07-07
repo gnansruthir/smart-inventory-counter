@@ -885,43 +885,13 @@ else:
             
             video_items = []
             for cls, count in class_counts.items():
-                if cls != "bottle":
-                    sku_info = sku_mapping.get(cls, {"sku_name": cls, "price": 0.0})
-                    video_items.append({
-                        "sku_name": sku_info.get("sku_name", cls),
-                        "detected_class": cls,
-                        "count": count,
-                        "unit_price": sku_info.get("price", 0.0)
-                    })
-            
-            bottle_count = class_counts.get("bottle", 0)
-            if bottle_count > 0:
-                count_coke = bottle_count // 2 + (bottle_count % 2)
-                remaining = bottle_count - count_coke
-                count_orange = remaining // 2 + (remaining % 2) if remaining > 1 else remaining
-                count_grape = bottle_count - count_coke - count_orange
-                
-                if count_coke > 0:
-                    video_items.append({
-                        "sku_name": "Classic Coca-Cola 500ml",
-                        "detected_class": "bottle",
-                        "count": count_coke,
-                        "unit_price": 45.0
-                    })
-                if count_orange > 0:
-                    video_items.append({
-                        "sku_name": "Orange Juice 500ml",
-                        "detected_class": "bottle",
-                        "count": count_orange,
-                        "unit_price": 55.0
-                    })
-                if count_grape > 0:
-                    video_items.append({
-                        "sku_name": "Grape Juice 500ml",
-                        "detected_class": "bottle",
-                        "count": count_grape,
-                        "unit_price": 60.0
-                    })
+                sku_info = sku_mapping.get(cls, {"sku_name": cls, "price": 0.0})
+                video_items.append({
+                    "sku_name": sku_info.get("sku_name", cls),
+                    "detected_class": cls,
+                    "count": count,
+                    "unit_price": sku_info.get("price", 0.0)
+                })
             
             total_items = sum(item["count"] for item in video_items)
             total_val = sum(item["count"] * item["unit_price"] for item in video_items)
