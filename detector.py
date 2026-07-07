@@ -39,22 +39,31 @@ class InventoryDetector:
         return annotated_image_rgb, class_counts
 
     def track_frame(self, frame, conf=0.25):
-        
-        results = self.model.track(frame, persist=True, tracker="bytetrack.yaml", verbose=False, conf=conf, classes=list(range(1, 80)))
+        try:
+            results = self.model.track(frame, persist=True, tracker="bytetrack.yaml", verbose=False, conf=conf, classes=list(range(1, 80)))
+        except Exception:
+            # Fall back to standard prediction if the tracking engine is not supported or fails
+            results = self.model(frame, verbose=False, conf=conf, classes=list(range(1, 80)))
+            
         result = results[0]
-
         annotated_frame = result.plot()
         annotated_frame_rgb = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
 
         active_tracks = {}
-        if result.boxes is not None and result.boxes.id is not None:
-            ids = result.boxes.id.int().tolist()
+        if result.boxes is not None:
             clss = result.boxes.cls.int().tolist()
-            for obj_id, cls_id in zip(ids, clss):
-                class_name = self.model.names[cls_id]
-                active_tracks[obj_id] = class_name
+            if hasattr(result.boxes, 'id') and result.boxes.id is not None:
+                ids = result.boxes.id.int().tolist()
+                for obj_id, cls_id in zip(ids, clss):
+                    class_name = self.model.names[cls_id]
+                    active_tracks[str(obj_id)] = class_name
+            else:
+                for idx, cls_id in enumerate(clss):
+                    class_name = self.model.names[cls_id]
+                    active_tracks[f"det_{idx}"] = class_name
 
         return annotated_frame_rgb, active_tracks
+
 
 # Quick self-test script block
 if __name__ == "__main__":
