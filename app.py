@@ -162,16 +162,22 @@ st.markdown(f"""
         }}
 
         /* Force black text for Username and Password widget labels */
-        div[data-testid="stWidgetLabel"] p {{
+        div[data-testid="stWidgetLabel"] label,
+        div[data-testid="stWidgetLabel"] p,
+        label,
+        span[data-testid="stWidgetLabel"] {{
             color: #000000 !important;
             font-weight: 600 !important;
         }}
 
-        /* Force black writing inside input fields and dropdowns */
-        input, select, textarea, [data-baseweb="input"] input, button[role="combobox"] span {{
+        /* Force light background and black text inside input fields and dropdowns */
+        input, select, textarea, [data-baseweb="input"], [data-baseweb="select"] > div, button[role="combobox"] span {{
+            background-color: #f1f5f9 !important;
             color: #000000 !important;
             -webkit-text-fill-color: #000000 !important;
+            border: 1px solid #cbd5e1 !important;
         }}
+
 
 
 
