@@ -101,23 +101,21 @@ TRANSLATIONS = {
         "Optimal shelf inventories": "All current shelf inventories are optimal!",
         "Owner Dashboard": "Owner Dashboard",
         "Staff Dashboard": "Staff Dashboard",
-        "Live Detection": "Live Detection",
-        "Static Image Upload": "Static Image Upload",
+        "Video Detection": "Video Detection",
+        "Image Detection": "Image Detection",
         "SKU Management": "SKU Management",
-        "Inventory List": "Inventory List",
         "Reports & Analytics": "Reports & Analytics",
         "Low stock count": "Low stock count",
         "Audit Logs": "Audit Logs",
         "Settings": "Settings",
-        "Central Inventory List": "Central Inventory List",
-        "Displaying current stock tallies": "Displaying current stock tallies based on latest Scan ID:",
         "Product Name": "Product Name",
         "Class ID": "Class ID",
         "Current Count": "Current Count",
         "Price": "Price",
-        "Alert Min Target": "Alert Min Target",
+        "Min count to be in shelf": "Min count to be in shelf",
         "Status": "Status",
         "Low Stock": "Low Stock",
+        "Optimal Stock": "Optimal Stock",
         "Edit Product Target thresholds": "Edit Product Target thresholds",
         "Select YOLO Class to edit": "Select YOLO Class to edit",
         "New Warning Limit threshold value": "New Warning Limit threshold value",
@@ -251,23 +249,21 @@ TRANSLATIONS = {
         "Optimal shelf inventories": "அனைத்து தற்போதைய அலமாரி சரக்குகளும் உகந்ததாக உள்ளன!",
         "Owner Dashboard": "உரிமையாளர் டாஷ்போர்டு",
         "Staff Dashboard": "பணியாளர் டாஷ்போர்டு",
-        "Live Detection": "நேரடி கண்டறிதல்",
-        "Static Image Upload": "நிலையான படப் பதிவேற்றம்",
+        "Video Detection": "வீடியோ கண்டறிதல்",
+        "Image Detection": "படம் கண்டறிதல்",
         "SKU Management": "SKU மேலாண்மை",
-        "Inventory List": "சரக்கு பட்டியல்",
         "Reports & Analytics": "அறிக்கைகள் & பகுப்பாய்வு",
         "Low stock count": "குறைந்த இருப்பு எண்ணிக்கை",
         "Audit Logs": "தணிக்கை பதிவுகள்",
         "Settings": "அமைப்புகள்",
-        "Central Inventory List": "மத்திய சரக்கு பட்டியல்",
-        "Displaying current stock tallies": "சமீபத்திய ஸ்கான் ஐடி அடிப்படையில் தற்போதைய பங்கு விவரங்கள் காட்டப்படுகின்றன:",
         "Product Name": "தயாரிப்பு பெயர்",
         "Class ID": "வகுப்பு ஐடி",
         "Current Count": "தற்போதைய எண்ணிக்கை",
         "Price": "விலை",
-        "Alert Min Target": "எச்சரிக்கை குறைந்தபட்ச இலக்கு",
+        "Min count to be in shelf": "அலமாரியில் இருக்க வேண்டிய குறைந்தபட்ச எண்ணிக்கை",
         "Status": "நிலை",
         "Low Stock": "குறைந்த இருப்பு",
+        "Optimal Stock": "சரியான இருப்பு",
         "Edit Product Target thresholds": "தயாரிப்பு இலக்கு வரம்புகளைத் திருத்துக",
         "Select YOLO Class to edit": "திருத்த வேண்டிய YOLO வகுப்பைத் தேர்ந்தெடுக்கவும்",
         "New Warning Limit threshold value": "புதிய எச்சரிக்கை வரம்பு மதிப்பு",
@@ -661,33 +657,24 @@ else:
     if st.session_state.user_role == "Owner":
         menu_options = [
             "Owner Dashboard", 
-            "Live Detection", 
-            "Static Image Upload", 
-            "SKU Management", 
-            "Inventory List", 
-            "Reports & Analytics", 
-            "Audit Logs", 
-            "Settings"
+            "Video Detection", 
+            "Image Detection", 
+            "SKU Management"
         ]
     else:
         menu_options = [
             "Staff Dashboard", 
-            "Live Detection", 
-            "Static Image Upload", 
-            "Inventory List"
+            "Video Detection", 
+            "Image Detection"
         ]
 
     # Map the English options to the app_mode values used in the conditional checks
     menu_map = {
         "Owner Dashboard": "Owner Dashboard",
         "Staff Dashboard": "Staff Dashboard",
-        "Live Detection": "Live Detection",
-        "Static Image Upload": "Static Image Upload",
-        "SKU Management": "SKU Management",
-        "Inventory List": "Inventory List",
-        "Reports & Analytics": "Reports & Analytics",
-        "Audit Logs": "Audit Logs",
-        "Settings": "Settings"
+        "Video Detection": "Video Detection",
+        "Image Detection": "Image Detection",
+        "SKU Management": "SKU Management"
     }
 
     app_mode_raw = st.sidebar.radio(
@@ -723,7 +710,6 @@ else:
     if "Dashboard" in app_mode:
         alerts = check_low_stock()
         if alerts:
-            st.warning("Low stock detected! Please restock the shelf.")
             st.toast("Low stock detected! Please restock the shelf.")
         st.subheader(TRANSLATIONS[st.session_state.app_lang][st.session_state.user_role + " Dashboard"])
         
@@ -758,61 +744,26 @@ else:
                 </div>
             """, unsafe_allow_html=True)
 
-        if alerts:
-            st.markdown(f"### {TRANSLATIONS[st.session_state.app_lang]['Active Replenishment Warnings']}")
-            for warning in alerts:
-                st.markdown(f"- {warning}")
-        else:
-            st.success(TRANSLATIONS[st.session_state.app_lang]["Optimal shelf inventories"])
-
-        # Quick Actions section removed entirely
-
-    # ----------------- Inventory List -----------------
-    elif app_mode == "Inventory List":
-        st.subheader(TRANSLATIONS[st.session_state.app_lang]["Central Inventory List"])
-        scans = db_manager.get_all_scans()
         if scans:
             latest_id = scans[0][0]
-            st.write(f"{TRANSLATIONS[st.session_state.app_lang]['Displaying current stock tallies']} **{latest_id}**")
             details = db_manager.get_scan_details(latest_id)
             if details:
                 records = []
                 for item in details:
                     sku_name, class_id, count, price = item
                     threshold = sku_mapping.get(class_id, {}).get("low_stock_threshold", 0)
-                    status = f"⚠️ {TRANSLATIONS[st.session_state.app_lang]['Low Stock']}" if count < threshold else "✅ OK"
+                    status = TRANSLATIONS[st.session_state.app_lang]["Low Stock"] if count < threshold else TRANSLATIONS[st.session_state.app_lang]["Optimal Stock"]
                     records.append({
                         TRANSLATIONS[st.session_state.app_lang]["Product Name"]: sku_name,
-                        TRANSLATIONS[st.session_state.app_lang]["Class ID"]: class_id,
                         TRANSLATIONS[st.session_state.app_lang]["Current Count"]: count,
                         TRANSLATIONS[st.session_state.app_lang]["Price"]: f"₹{price:.2f}",
-                        TRANSLATIONS[st.session_state.app_lang]["Alert Min Target"]: threshold,
+                        TRANSLATIONS[st.session_state.app_lang]["Min count to be in shelf"]: threshold,
                         TRANSLATIONS[st.session_state.app_lang]["Status"]: status
                     })
                 st.dataframe(pd.DataFrame(records), hide_index=True, use_container_width=True)
-                
-                # Owner-only edit controls
-                if st.session_state.user_role == "Owner":
-                    st.write("---")
-                    st.write("### ✏️ " + TRANSLATIONS[st.session_state.app_lang]["Edit Product Target thresholds"])
-                    with st.form("edit_thresholds_form"):
-                        cls_to_edit = st.selectbox(TRANSLATIONS[st.session_state.app_lang]["Select YOLO Class to edit"], options=list(sku_mapping.keys()), format_func=lambda x: sku_mapping[x]["sku_name"])
-                        new_threshold = st.number_input(TRANSLATIONS[st.session_state.app_lang]["New Warning Limit threshold value"], min_value=0, value=int(sku_mapping[cls_to_edit]["low_stock_threshold"]) if cls_to_edit else 5)
-                        save_thresh_btn = st.form_submit_button(TRANSLATIONS[st.session_state.app_lang]["Update Product Warning threshold"])
-                        if save_thresh_btn and cls_to_edit:
-                            sku_mapping[cls_to_edit]["low_stock_threshold"] = int(new_threshold)
-                            save_sku_mapping(sku_mapping)
-                            db_manager.log_audit("Owner", f"Modified threshold limit for {cls_to_edit} to {new_threshold}")
-                            succ_msg = TRANSLATIONS[st.session_state.app_lang]["Successfully updated threshold"]
-                            to_msg = TRANSLATIONS[st.session_state.app_lang]["to"]
-                            st.success(f"{succ_msg} {sku_mapping[cls_to_edit]['sku_name']} {to_msg} {new_threshold}!")
-                            st.rerun()
-        else:
-            st.info(TRANSLATIONS[st.session_state.app_lang]["No scanning data logged yet"])
 
-
-    # ----------------- Static Image Upload -----------------
-    elif app_mode == "Static Image Upload":
+    # ----------------- Image Detection -----------------
+    elif app_mode == "Image Detection":
         st.subheader(TRANSLATIONS[st.session_state.app_lang]["Static Image Scanner"])
         conf_val = 0.50
         uploaded_file = st.file_uploader(TRANSLATIONS[st.session_state.app_lang]["Upload shelf photograph"], type=["jpg", "jpeg", "png"])
@@ -887,8 +838,8 @@ else:
                         st.session_state.pop("adjusted_counts", None)
                         st.rerun()
 
-    # ----------------- Live Detection -----------------
-    elif app_mode == "Live Detection":
+    # ----------------- Video Detection -----------------
+    elif app_mode == "Video Detection":
         st.subheader(TRANSLATIONS[st.session_state.app_lang]["Real-time Tracking Feed"])
         conf_val = 0.50
         uploaded_video = st.file_uploader(TRANSLATIONS[st.session_state.app_lang]["Upload video file"], type=["mp4", "avi", "mov"])
