@@ -146,9 +146,15 @@ else:
                 border: 1px solid #cbd5e1 !important;
             }
 
-            section[data-testid="stSidebar"] * {
-                color: #000000 !important;
+            section[data-testid="stSidebar"] *,
+            [data-testid="stSidebar"] *,
+            div[data-testid="stRadio"] *,
+            div[role="radiogroup"] *,
+            [data-baseweb="radio"] * {
+                color: #ffffff !important;
+                -webkit-text-fill-color: #ffffff !important;
             }
+
             .main input, .main select, .main textarea, .main [data-baseweb="input"], .main [data-baseweb="select"] > div, .main button[role="combobox"] span {
                 background-color: #f1f5f9 !important;
                 color: #000000 !important;
