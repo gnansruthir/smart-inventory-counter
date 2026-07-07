@@ -819,7 +819,7 @@ else:
     # ----------------- Static Image Upload -----------------
     elif app_mode == "Static Image Upload":
         st.subheader(TRANSLATIONS[st.session_state.app_lang]["Static Image Scanner"])
-        conf_val = 0.15
+        conf_val = 0.50
         uploaded_file = st.file_uploader(TRANSLATIONS[st.session_state.app_lang]["Upload shelf photograph"], type=["jpg", "jpeg", "png"])
         
         if uploaded_file is not None and detector is not None:
@@ -886,7 +886,7 @@ else:
     # ----------------- Live Detection -----------------
     elif app_mode == "Live Detection":
         st.subheader(TRANSLATIONS[st.session_state.app_lang]["Real-time Tracking Feed"])
-        conf_val = 0.15
+        conf_val = 0.50
         uploaded_video = st.file_uploader(TRANSLATIONS[st.session_state.app_lang]["Upload video file"], type=["mp4", "avi", "mov"])
         if uploaded_video is not None:
             temp_file_path = "temp_uploaded_video.mp4"
