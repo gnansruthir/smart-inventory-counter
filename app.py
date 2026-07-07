@@ -61,6 +61,9 @@ if "user_role" not in st.session_state:
 if "current_page" not in st.session_state:
     st.session_state.current_page = "Landing"
 
+if "app_theme" not in st.session_state:
+    st.session_state.app_theme = "Light Mode"
+
 if not st.session_state.logged_in and bg_base64:
     bg_style = f"""
         .stApp {{
@@ -75,15 +78,37 @@ if not st.session_state.logged_in and bg_base64:
         }}
     """
 else:
-    bg_style = """
-        .stApp {
-            background-color: #ffffff;
-        }
-        .main {
-            background-color: #ffffff;
-            color: #0f172a;
-        }
-    """
+    if st.session_state.app_theme == "Dark Mode":
+        bg_style = """
+            .stApp {
+                background-color: #0b0f19 !important;
+            }
+            .main {
+                background-color: #0b0f19 !important;
+                color: #f1f5f9 !important;
+            }
+            h1, h2, h3, h4, h5, h6, label, p, span, div, strong {
+                color: #f1f5f9 !important;
+            }
+            div[data-testid="stMetricValue"] > div {
+                color: #f1f5f9 !important;
+            }
+            .metric-card {
+                background-color: #1e293b !important;
+                border: 1px solid #334155 !important;
+            }
+        """
+    else:
+        bg_style = """
+            .stApp {
+                background-color: #ffffff !important;
+            }
+            .main {
+                background-color: #ffffff !important;
+                color: #0f172a !important;
+            }
+        """
+
 
 # Custom premium styling
 st.markdown(f"""
@@ -365,8 +390,24 @@ else:
                         "Status": status
                     })
                 st.dataframe(pd.DataFrame(records), hide_index=True, use_container_width=True)
+                
+                # Owner-only edit controls
+                if st.session_state.user_role == "Owner":
+                    st.write("---")
+                    st.write("### ✏️ Edit Product Target thresholds")
+                    with st.form("edit_thresholds_form"):
+                        cls_to_edit = st.selectbox("Select YOLO Class to edit", options=list(sku_mapping.keys()), format_func=lambda x: sku_mapping[x]["sku_name"])
+                        new_threshold = st.number_input("New Warning Limit threshold value", min_value=0, value=int(sku_mapping[cls_to_edit]["low_stock_threshold"]) if cls_to_edit else 5)
+                        save_thresh_btn = st.form_submit_button("Update Product Warning threshold")
+                        if save_thresh_btn and cls_to_edit:
+                            sku_mapping[cls_to_edit]["low_stock_threshold"] = int(new_threshold)
+                            save_sku_mapping(sku_mapping)
+                            db_manager.log_audit("Owner", f"Modified threshold limit for {cls_to_edit} to {new_threshold}")
+                            st.success(f"Successfully updated threshold for {sku_mapping[cls_to_edit]['sku_name']} to {new_threshold}!")
+                            st.rerun()
         else:
             st.info("No scanning data logged yet. Run a static image scan to populate records.")
+
 
     # ----------------- Static Image Upload -----------------
     elif app_mode == "📷 Static Image Upload":
@@ -617,6 +658,42 @@ else:
         else:
             st.success("All catalog products are fully stocked!")
 
+        if st.session_state.user_role == "Owner":
+            st.write("---")
+            st.write("### ⚙️ Configure Warning Notification Channels")
+            CONFIG_FILE = "alert_config.json"
+            if os.path.exists(CONFIG_FILE):
+                with open(CONFIG_FILE, "r") as f:
+                    alert_config = json.load(f)
+            else:
+                alert_config = {
+                    "email_enabled": False,
+                    "email_address": "manager@store.com",
+                    "telegram_enabled": False,
+                    "telegram_chat_id": "@SmartInventoryAlerts"
+                }
+                
+            with st.form("owner_alert_config_form"):
+                email_enabled = st.checkbox("Enable Automated Email Reports (SMTP)", value=alert_config["email_enabled"])
+                email_address = st.text_input("Manager Email Address", value=alert_config["email_address"])
+                telegram_enabled = st.checkbox("Enable Instant Telegram Mobile Push Alerts", value=alert_config["telegram_enabled"])
+                telegram_chat_id = st.text_input("Telegram Chat ID / Username", value=alert_config["telegram_chat_id"])
+                save_cfg = st.form_submit_button("Save Notification Settings")
+                
+                if save_cfg:
+                    new_cfg = {
+                        "email_enabled": email_enabled,
+                        "email_address": email_address,
+                        "telegram_enabled": telegram_enabled,
+                        "telegram_chat_id": telegram_chat_id
+                    }
+                    with open(CONFIG_FILE, "w") as f:
+                        json.dump(new_cfg, f, indent=2)
+                    db_manager.log_audit("Owner", "Updated notification channel configurations")
+                    st.success("Successfully saved notification channel credentials!")
+                    st.rerun()
+
+
     # ----------------- Audit Logs -----------------
     elif app_mode == "📜 Audit Logs":
         st.subheader("📜 System Audit Logs")
@@ -630,10 +707,21 @@ else:
             else:
                 st.info("No audit logs logged in database.")
 
-    # ----------------- Settings & Backups -----------------
     elif app_mode == "🔧 Settings":
         st.subheader("🔧 System Configurations")
         
+        # Theme Settings Toggle (Available to both Owner and Staff)
+        st.write("---")
+        st.write("### 🌓 Display Theme Preferences")
+        theme_choice = st.selectbox(
+            "Select Dashboard Color Scheme Theme", 
+            ["Light Mode", "Dark Mode"], 
+            index=0 if st.session_state.app_theme == "Light Mode" else 1
+        )
+        if theme_choice != st.session_state.app_theme:
+            st.session_state.app_theme = theme_choice
+            st.rerun()
+
         # Backup section
         st.write("---")
         st.write("### 💾 Backup & Restore Catalog Mappings")
@@ -678,3 +766,4 @@ else:
                 db_manager.log_audit("Owner", "Reset and wiped SQLite database records")
                 st.success("SQLite logs database reset successfully!")
                 st.rerun()
+
