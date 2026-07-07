@@ -124,10 +124,10 @@ def generate_pdf_report(tally_data, total_items, total_value, translations, lang
     # Items table data
     for item in tally_data:
         raw_status = item.get("status", "N/A")
-        if raw_status in [translations["Tamil"]["Low Stock"], translations["English"]["Low Stock"]]:
-            pdf_status = translations["English"]["Low Stock"]
+        if raw_status in [translations["Tamil"]["Low Stock"], translations["English"]["Low Stock"], "Low Stock", "Low", "குறைவு"]:
+            pdf_status = "Low"
         else:
-            pdf_status = translations["English"]["Optimal Stock"]
+            pdf_status = "Good"
             
         table_content.append([
             Paragraph(str(item.get("sku_name", "N/A")), cell_style),
