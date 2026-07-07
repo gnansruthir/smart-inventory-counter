@@ -167,6 +167,13 @@ st.markdown(f"""
             font-weight: 600 !important;
         }}
 
+        /* Force black writing inside input fields and dropdowns */
+        input, select, textarea, [data-baseweb="input"] input, button[role="combobox"] span {{
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+        }}
+
+
 
     </style>
 """, unsafe_allow_html=True)
