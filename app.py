@@ -564,19 +564,18 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# Collapse language switcher at the top right of the page
+# Language switcher at the top right of the page
 col_main_top, col_lang_top = st.columns([8, 2])
 with col_lang_top:
-    with st.expander("🌐 Language / மொழி", expanded=False):
-        lang_select = st.selectbox(
-            "Select Language / மொழி",
-            options=["English", "Tamil"],
-            index=0 if st.session_state.app_lang == "English" else 1,
-            label_visibility="collapsed"
-        )
-        if lang_select != st.session_state.app_lang:
-            st.session_state.app_lang = lang_select
-            st.rerun()
+    lang_select = st.selectbox(
+        "Language / மொழி",
+        options=["English", "Tamil"],
+        index=0 if st.session_state.app_lang == "English" else 1
+    )
+    if lang_select != st.session_state.app_lang:
+        st.session_state.app_lang = lang_select
+        st.rerun()
+
 
 if not st.session_state.logged_in:
     st.markdown(f"""
