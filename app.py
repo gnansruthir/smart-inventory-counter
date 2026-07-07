@@ -122,7 +122,7 @@ st.markdown(f"""
         }}
         .header-container h1 {{
             color: #1e1b4b !important;
-            font-size: 3.25rem !important;
+            font-size: 4.25rem !important;
             margin: 0 !important;
             text-shadow: 2px 2px 0px #ffffff, -2px -2px 0px #ffffff, 2px -2px 0px #ffffff, -2px 2px 0px #ffffff, 0px 4px 10px rgba(124, 58, 237, 0.7);
             animation: floatAnimation 4s ease-in-out infinite;
@@ -160,6 +160,13 @@ st.markdown(f"""
             color: #000000 !important;
             font-weight: 600 !important;
         }}
+
+        /* Force black text for Username and Password widget labels */
+        div[data-testid="stWidgetLabel"] p {{
+            color: #000000 !important;
+            font-weight: 600 !important;
+        }}
+
 
     </style>
 """, unsafe_allow_html=True)
